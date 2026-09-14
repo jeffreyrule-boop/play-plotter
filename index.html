@@ -13,11 +13,17 @@
     .title { font-size: 16px; font-weight: bold; }
     .sub-title { font-size: 12px; color: #cbd5e0; }
     
+    /* Warning Status Banner */
+    .lineup-warning { margin-top: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-align: center; transition: all 0.2s ease; }
+    .warning-under { background: #feebc8; color: #742a2a; border: 1px solid #fbd38d; }
+    .warning-over { background: #fed7d7; color: #742a2a; border: 1px solid #feb2b2; }
+    .warning-valid { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+
     .qtr-selector { display: flex; gap: 4px; margin-top: 6px; }
     .qtr-btn { flex: 1; padding: 4px; background: #2d3748; color: white; border: 1px solid #4a5568; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; }
     .qtr-btn.active { background: #3182ce; border-color: #63b3ed; }
 
-    .sticky-actions { position: sticky; top: 76px; background: #edf2f7; padding: 6px 12px; z-index: 99; border-bottom: 1px solid #cbd5e0; display: flex; gap: 4px; flex-wrap: wrap; }
+    .sticky-actions { position: sticky; top: 102px; background: #edf2f7; padding: 6px 12px; z-index: 99; border-bottom: 1px solid #cbd5e0; display: flex; gap: 4px; flex-wrap: wrap; }
     .btn-lock { flex: 2; padding: 10px; background: #2b6cb0; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
     .btn-undo { padding: 10px 10px; background: #c53030; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
     .btn-sync { flex: 1; padding: 10px; background: #2f855a; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
@@ -62,6 +68,7 @@
       <div class="title">Liberty Falcons Plotter</div>
       <div class="sub-title" id="playCountHeader">Play #1 • On Field: 0 / 11</div>
     </div>
+    <div id="lineupWarning" class="lineup-warning warning-under">⚠️ Need 11 more players</div>
     <div class="qtr-selector">
       <div class="qtr-btn active" onclick="setQtr(1)">Q1</div>
       <div class="qtr-btn" onclick="setQtr(2)">Q2</div>
@@ -228,8 +235,25 @@
     function render() {
       const gridEl = document.getElementById("playerGrid");
       gridEl.innerHTML = "";
-      document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${activePlayers.size} / 11`;
+      const count = activePlayers.size;
+      
+      document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${count} / 11`;
       document.getElementById("btnPlayNum").innerText = playNumber;
+
+      // Update Warning Badge
+      const warnEl = document.getElementById("lineupWarning");
+      if (count < 11) {
+        const diff = 11 - count;
+        warnEl.innerText = `⚠️ Need ${diff} more player${diff > 1 ? 's' : ''}`;
+        warnEl.className = "lineup-warning warning-under";
+      } else if (count > 11) {
+        const diff = count - 11;
+        warnEl.innerText = `🚨 Exceeds 11 by ${diff} player${diff > 1 ? 's' : ''}`;
+        warnEl.className = "lineup-warning warning-over";
+      } else {
+        warnEl.innerText = "✓ Full Lineup (11/11)";
+        warnEl.className = "lineup-warning warning-valid";
+      }
 
       const sortedRoster = [...roster].sort((a, b) => {
         const disA = playerStats[a].disabled ? 1 : 0;
@@ -286,7 +310,22 @@
     }
 
     function lockInPlay() {
-      if (activePlayers.size === 0) { alert("Select active players first!"); return; }
+      const count = activePlayers.size;
+
+      if (count === 0) { 
+        alert("Select active players first!"); 
+        return; 
+      }
+
+      if (count < 11) {
+        if (!confirm(`You currently have only ${count} player(s) selected (expected 11).\n\nDo you still want to lock in this play?`)) {
+          return;
+        }
+      } else if (count > 11) {
+        if (!confirm(`You currently have ${count} players selected (exceeds 11 by ${count - 11}).\n\nDo you still want to lock in this play?`)) {
+          return;
+        }
+      }
 
       playHistory.push({
         type: "PLAY",
@@ -308,7 +347,6 @@
     }
 
     function undoLastPlay() {
-      // Find the last logged play in history
       let lastPlayIdx = -1;
       for (let i = playHistory.length - 1; i >= 0; i--) {
         if (playHistory[i].type === "PLAY") {
@@ -324,23 +362,19 @@
 
       const playToUndo = playHistory.splice(lastPlayIdx, 1)[0];
 
-      // Revert play counts for all players in that play
       playToUndo.players.forEach(name => {
         if (playerStats[name]) {
           playerStats[name].total = Math.max(0, playerStats[name].total - 1);
-          // If total drops below 10, remove Qtr Met badge status
           if (playerStats[name].total < 10) {
             playerStats[name].qtrMet = null;
           }
         }
       });
 
-      // Restore play number and active player field selection for quick correction
       playNumber = playToUndo.play;
       currentQtr = playToUndo.quarter;
       activePlayers = new Set(playToUndo.players);
 
-      // Log the undo action in history for audit/syncing
       playHistory.push({
         type: "UNDO",
         undonePlay: playToUndo.play,
@@ -348,7 +382,6 @@
         note: `Undone play #${playToUndo.play}`
       });
 
-      // Update Qtr buttons UI
       document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
         btn.classList.toggle("active", idx + 1 === currentQtr);
       });
@@ -359,7 +392,7 @@
 
     async function syncToGoogleSheet() {
       if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-        alert("Paste your Google Apps Script Web App URL into line 103 (SCRIPT_URL).");
+        alert("Paste your Google Apps Script Web App URL into line 108 (SCRIPT_URL).");
         return;
       }
       try {
