@@ -6,7 +6,7 @@
   <title>Liberty Falcons Play Plotter</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; padding: 0; background: #f0f2f5; color: #1c1e21; padding-bottom: 20px; }
+    body { margin: 0; padding: 0; background: #f0f2f5; color: #1c1e21; padding-bottom: 30px; }
     
     .header { position: sticky; top: 0; background: #1a365d; color: white; padding: 8px 12px; z-index: 100; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
     .header-top { display: flex; justify-content: space-between; align-items: center; }
@@ -17,26 +17,41 @@
     .qtr-btn { flex: 1; padding: 4px; background: #2d3748; color: white; border: 1px solid #4a5568; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; }
     .qtr-btn.active { background: #3182ce; border-color: #63b3ed; }
 
-    .sticky-actions { position: sticky; top: 76px; background: #edf2f7; padding: 6px 12px; z-index: 99; border-bottom: 1px solid #cbd5e0; display: flex; gap: 6px; }
+    .sticky-actions { position: sticky; top: 76px; background: #edf2f7; padding: 6px 12px; z-index: 99; border-bottom: 1px solid #cbd5e0; display: flex; gap: 4px; flex-wrap: wrap; }
     .btn-lock { flex: 2; padding: 10px; background: #2b6cb0; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
     .btn-sync { flex: 1; padding: 10px; background: #2f855a; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
-    .btn-reset { padding: 10px 12px; background: #e53e3e; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-edit-mode { flex: 1; padding: 10px; background: #d69e2e; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
+    .btn-edit-mode.active { background: #dd6b20; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #dd6b20; }
+    .btn-reset { padding: 10px 8px; background: #e53e3e; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
 
-    /* 2-Column Grid Layout for Compact Sideline View */
     .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 8px 12px; }
     .player-chip { display: flex; align-items: center; justify-content: space-between; background: white; padding: 6px 8px; border-radius: 6px; border: 1.5px solid #cbd5e0; font-size: 12px; font-weight: bold; user-select: none; cursor: pointer; min-height: 38px; }
     .player-chip.selected { background: #ebf8ff; border-color: #3182ce; color: #2b6cb0; box-shadow: inset 0 0 0 1px #3182ce; }
     .player-chip.met { background: #f0fff4; border-color: #38a169; }
     .player-chip.met.selected { background: #c6f6d5; border-color: #276749; color: #22543d; }
+    .player-chip.disabled-player { background: #edf2f7; border-color: #cbd5e0; color: #a0aec0; opacity: 0.6; }
+    .player-chip.edit-mode-active { border-style: dashed; }
     
     .chip-info { display: flex; flex-direction: column; overflow: hidden; }
     .chip-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
     .chip-badge { font-size: 10px; font-weight: normal; color: #718096; margin-top: 1px; }
     .player-chip.selected .chip-badge { color: #2b6cb0; }
     .player-chip.met .chip-badge { color: #276749; font-weight: bold; }
+    .player-chip.disabled-player .chip-badge { color: #a0aec0; }
     
     .status-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #cbd5e0; flex-shrink: 0; }
     .player-chip.selected .status-dot { background: #3182ce; border-color: #2b6cb0; }
+
+    /* Edit Dialog Modal Styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 18px; border-radius: 8px; width: 85%; max-width: 340px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .modal-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; }
+    .modal-field { margin-bottom: 12px; }
+    .modal-field label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #4a5568; }
+    .modal-field input[type="number"] { width: 100%; padding: 8px; font-size: 14px; border: 1px solid #cbd5e0; border-radius: 4px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+    .btn-modal-save { padding: 8px 14px; background: #3182ce; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    .btn-modal-cancel { padding: 8px 14px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -55,12 +70,32 @@
   </div>
 
   <div class="sticky-actions">
-    <button class="btn-lock" onclick="lockInPlay()">LOCK IN PLAY <span id="btnPlayNum">1</span></button>
+    <button class="btn-lock" id="btnLock" onclick="lockInPlay()">LOCK IN PLAY <span id="btnPlayNum">1</span></button>
     <button class="btn-sync" onclick="syncToGoogleSheet()">Sync</button>
+    <button class="btn-edit-mode" id="btnEditMode" onclick="toggleEditMode()">Edit Mode</button>
     <button class="btn-reset" onclick="resetGame()">Reset</button>
   </div>
 
   <div class="player-grid" id="playerGrid"></div>
+
+  <!-- Modal for Player Editing -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-content">
+      <div class="modal-title" id="modalPlayerTitle">Edit Player</div>
+      <div class="modal-field">
+        <label for="modalPlayCount">Total Plays Count:</label>
+        <input type="number" id="modalPlayCount" min="0" />
+      </div>
+      <div class="modal-field" style="display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" id="modalDisabled" style="width: 18px; height: 18px;" />
+        <label for="modalDisabled" style="margin: 0;">Disable / Out of Game</label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-modal-save" onclick="savePlayerEdit()">Save</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const roster = [
@@ -77,9 +112,14 @@
 
     let currentQtr = 1;
     let playNumber = 1;
+    let isEditMode = false;
+    let editingPlayer = null;
     let activePlayers = new Set();
     let playHistory = [];
-    let playerStats = roster.reduce((acc, name) => { acc[name] = { total: 0, qtrMet: null }; return acc; }, {});
+    let playerStats = roster.reduce((acc, name) => { 
+      acc[name] = { total: 0, qtrMet: null, disabled: false }; 
+      return acc; 
+    }, {});
 
     const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
 
@@ -113,25 +153,120 @@
       }
     }
 
+    function toggleEditMode() {
+      isEditMode = !isEditMode;
+      const btn = document.getElementById("btnEditMode");
+      btn.classList.toggle("active", isEditMode);
+      btn.innerText = isEditMode ? "Done Editing" : "Edit Mode";
+      render();
+    }
+
+    function openEditModal(name) {
+      editingPlayer = name;
+      const stats = playerStats[name];
+      document.getElementById("modalPlayerTitle").innerText = `Edit: ${name}`;
+      document.getElementById("modalPlayCount").value = stats.total;
+      document.getElementById("modalDisabled").checked = !!stats.disabled;
+      document.getElementById("editModal").style.display = "flex";
+    }
+
+    function closeEditModal() {
+      editingPlayer = null;
+      document.getElementById("editModal").style.display = "none";
+    }
+
+    function savePlayerEdit() {
+      if (!editingPlayer) return;
+      const stats = playerStats[editingPlayer];
+      const newTotal = parseInt(document.getElementById("modalPlayCount").value, 10) || 0;
+      const isDisabled = document.getElementById("modalDisabled").checked;
+
+      const oldTotal = stats.total;
+      const oldDisabled = stats.disabled;
+
+      // Annotate log history if play count changed manually
+      if (oldTotal !== newTotal) {
+        playHistory.push({
+          type: "MANUAL_ADJUSTMENT",
+          play: playNumber,
+          quarter: currentQtr,
+          player: editingPlayer,
+          oldValue: oldTotal,
+          newValue: newTotal,
+          note: `Manual count update: ${oldTotal} -> ${newTotal}`
+        });
+      }
+
+      stats.total = newTotal;
+      stats.disabled = isDisabled;
+
+      // Update Qtr Met badge status
+      if (stats.total >= 10 && !stats.qtrMet) {
+        stats.qtrMet = `Q${currentQtr}`;
+      } else if (stats.total < 10) {
+        stats.qtrMet = null;
+      }
+
+      // If disabled, automatically remove from active field selection
+      if (isDisabled) {
+        activePlayers.delete(editingPlayer);
+        if (oldDisabled !== isDisabled) {
+          playHistory.push({
+            type: "PLAYER_DISABLED",
+            play: playNumber,
+            quarter: currentQtr,
+            player: editingPlayer,
+            note: "Player marked out/disabled"
+          });
+        }
+      }
+
+      saveToLocalStorage();
+      closeEditModal();
+      render();
+    }
+
     function render() {
       const gridEl = document.getElementById("playerGrid");
       gridEl.innerHTML = "";
       document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${activePlayers.size} / 11`;
       document.getElementById("btnPlayNum").innerText = playNumber;
 
-      roster.forEach(name => {
+      // Sort roster: active/enabled players first, disabled players moved to the bottom
+      const sortedRoster = [...roster].sort((a, b) => {
+        const disA = playerStats[a].disabled ? 1 : 0;
+        const disB = playerStats[b].disabled ? 1 : 0;
+        return disA - disB;
+      });
+
+      sortedRoster.forEach(name => {
         const stats = playerStats[name];
         const isSelected = activePlayers.has(name);
         const isMet = stats.total >= 10;
+        const isDisabled = stats.disabled;
 
         const chip = document.createElement("div");
-        chip.className = `player-chip ${isSelected ? 'selected' : ''} ${isMet ? 'met' : ''}`;
-        chip.onclick = () => togglePlayer(name);
+        chip.className = `player-chip ${isSelected ? 'selected' : ''} ${isMet ? 'met' : ''} ${isDisabled ? 'disabled-player' : ''} ${isEditMode ? 'edit-mode-active' : ''}`;
+        
+        chip.onclick = () => {
+          if (isEditMode) {
+            openEditModal(name);
+          } else {
+            if (!isDisabled) togglePlayer(name);
+          }
+        };
+
+        let badgeText = `Plays: ${stats.total}`;
+        if (isDisabled) {
+          badgeText = `OUT (${stats.total})`;
+        } else if (isMet) {
+          badgeText = `Met (${stats.qtrMet})`;
+        }
 
         chip.innerHTML = `
           <div class="chip-info">
             <span class="chip-name">${name}</span>
-            <span class="chip-badge">${isMet ? `Met (${stats.qtrMet})` : `Plays: ${stats.total}`}</span>
+            <span class="chip-badge">${badgeText}</span>
           </div>
           <div class="status-dot"></div>
         `;
@@ -155,7 +290,12 @@
     function lockInPlay() {
       if (activePlayers.size === 0) { alert("Select active players first!"); return; }
 
-      playHistory.push({ play: playNumber, quarter: currentQtr, players: Array.from(activePlayers) });
+      playHistory.push({
+        type: "PLAY",
+        play: playNumber,
+        quarter: currentQtr,
+        players: Array.from(activePlayers)
+      });
 
       activePlayers.forEach(name => {
         playerStats[name].total += 1;
@@ -181,7 +321,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ playHistory: playHistory })
         });
-        alert("Synced play history to Google Sheet!");
+        alert("Synced play history and adjustments to Google Sheet!");
       } catch (err) {
         alert("Error syncing: " + err.message);
       }
