@@ -2,53 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Falcons Play Plotter</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --border: #334155;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --success: #16a34a;
-      --warning: #d97706;
-      --danger: #dc2626;
+      --bg: #0b1120;
+      --card-bg: #151e32;
+      --card-border: #23314d;
+      --active-card-bg: #1a294d;
+      --active-card-border: #3b82f6;
+      --text-main: #ffffff;
+      --text-muted: #8e9bb0;
+      --text-sub: #64748b;
+      --blue-accent: #3b82f6;
+      --green-accent: #22c55e;
+      --green-bg: rgba(34, 197, 94, 0.15);
+      --red-accent: #ef4444;
+      --btn-gray: #1e293b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 12px; max-width: 800px; margin: 0 auto; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); padding: 12px; padding-bottom: 140px; max-width: 500px; margin: 0 auto; }
 
+    /* Top Navigation Header */
     .header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      gap: 12px;
+      align-items: flex-start;
       margin-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
       position: relative;
     }
 
-    /* Context Menu Styles */
-    .menu-container {
-      position: relative;
+    .meta-info {
+      font-size: 0.9rem;
+      line-height: 1.4;
     }
 
-    .menu-btn {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 1rem;
+    .meta-info div {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+    }
+
+    .meta-label { color: var(--text-muted); }
+    .meta-value { font-weight: 600; text-decoration: underline; color: var(--text-main); }
+
+    /* Context Menu / Dropdown */
+    .menu-container { position: relative; }
+
+    .menu-btn {
+      background: var(--btn-gray);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
     }
 
     .dropdown-menu {
@@ -56,131 +66,205 @@
       position: absolute;
       right: 0;
       top: 110%;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-      min-width: 160px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+      min-width: 150px;
       z-index: 100;
       overflow: hidden;
     }
 
-    .dropdown-menu.show {
-      display: block;
-    }
+    .dropdown-menu.show { display: block; }
 
     .dropdown-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: block;
       width: 100%;
       padding: 10px 14px;
       background: none;
       border: none;
-      color: var(--text);
+      color: var(--text-main);
       text-align: left;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
       text-decoration: none;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--card-border);
     }
 
-    .dropdown-item:last-child {
-      border-bottom: none;
-    }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover { background: var(--card-border); }
+    .dropdown-item.danger { color: #f87171; }
 
-    .dropdown-item:hover {
-      background: #334155;
-    }
-
-    .dropdown-item.danger {
-      color: #f87171;
-    }
-
-    /* Original Control Panel Layout */
-    .controls {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
-    select, input {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 0.9rem;
-    }
-
-    .btn {
-      background: var(--primary);
-      color: var(--text);
-      border: none;
-      padding: 10px 16px;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn:hover { background: var(--primary-hover); }
-
-    /* Original Roster Grid & Card Styling */
+    /* 2-Column Grid Layout */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
+      margin-bottom: 16px;
     }
 
+    /* Player Cards matching exact UI */
     .card {
-      background: var(--card);
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
+      background: var(--card-bg);
+      border: 1.5px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       cursor: pointer;
       user-select: none;
-      position: relative;
+      min-height: 52px;
     }
 
     .card.active {
-      border-color: var(--primary);
-      background: rgba(37, 99, 235, 0.15);
+      background: var(--active-card-bg);
+      border-color: var(--active-card-border);
     }
 
     .card.disabled {
-      opacity: 0.4;
-      border-color: var(--danger);
+      opacity: 0.35;
       text-decoration: line-through;
     }
 
-    .card .number { font-size: 1.2rem; font-weight: bold; }
-    .card .name { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
-    .card .count { font-size: 0.85rem; font-weight: 600; margin-top: 6px; }
-
-    .badge {
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: bold;
+    .card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
-    .badge-met { background: rgba(22, 163, 74, 0.2); color: #4ade80; }
-    .badge-unmet { background: rgba(217, 119, 6, 0.2); color: #fbbf24; }
+
+    .card-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .card-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .card.active .card-status { color: #93c5fd; }
+
+    /* Status Dots */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--card-border);
+      flex-shrink: 0;
+    }
+
+    .status-dot.dot-met {
+      background: var(--green-accent);
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+    }
+
+    .status-dot.dot-active {
+      background: var(--blue-accent);
+      box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
+    }
+
+    /* Sticky Bottom Controls Area */
+    .bottom-panel {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 500px;
+      background: var(--bg);
+      padding: 10px 12px 20px 12px;
+      border-top: 1px solid var(--card-border);
+      z-index: 90;
+    }
+
+    /* Quarter Selectors */
+    .quarter-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .q-btn {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 8px 0;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .q-btn.active {
+      background: var(--blue-accent);
+      color: var(--text-main);
+      border-color: var(--blue-accent);
+    }
+
+    /* Action Bar Status */
+    .play-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0 4px;
+    }
+
+    .lineup-indicator {
+      color: var(--green-accent);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Action Buttons */
+    .action-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-undo {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      width: 30%;
+      cursor: pointer;
+    }
+
+    .btn-lock {
+      background: var(--blue-accent);
+      border: none;
+      color: var(--text-main);
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      width: 70%;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
+  <!-- Top Navigation / Context Header -->
   <div class="header">
-    <div>
-      <h2>Falcons Play Plotter</h2>
-      <small id="status" style="color: var(--muted);">Ready</small>
+    <div class="meta-info">
+      <div><span class="meta-label">Plotter:</span> <span class="meta-value" id="plotterName">ApexWing22</span></div>
+      <div><span class="meta-label">Game:</span> <span class="meta-value" id="gameName">Game 9/14/2026</span></div>
     </div>
 
-    <!-- Context Menu in Header -->
     <div class="menu-container">
-      <button class="menu-btn" onclick="toggleMenu(event)">⚙️ Menu ▾</button>
+      <button class="menu-btn" onclick="toggleMenu(event)">Menu ▾</button>
       <div class="dropdown-menu" id="contextMenu">
         <button class="dropdown-item" onclick="toggleEditMode()">✏️ Edit</button>
         <button class="dropdown-item" onclick="syncData()">🔄 Sync</button>
@@ -190,13 +274,28 @@
     </div>
   </div>
 
-  <div class="controls">
-    <input type="text" id="userInput" placeholder="Your Name/Initials" style="flex: 1;" />
-    <select id="gameSelect" style="flex: 1;"></select>
-    <button class="btn" onclick="recordPlay()">+ Log Play</button>
-  </div>
-
+  <!-- Player Grid -->
   <div class="grid" id="rosterGrid"></div>
+
+  <!-- Bottom Panel controls -->
+  <div class="bottom-panel">
+    <div class="quarter-tabs">
+      <button class="q-btn" onclick="selectQuarter('Q1')">Q1</button>
+      <button class="q-btn" onclick="selectQuarter('Q2')">Q2</button>
+      <button class="q-btn active" id="btnQ3" onclick="selectQuarter('Q3')">Q3</button>
+      <button class="q-btn" onclick="selectQuarter('Q4')">Q4</button>
+    </div>
+
+    <div class="play-status-bar">
+      <span id="playCounterText">Play #14 • On Field: 0 / 11</span>
+      <span class="lineup-indicator" id="lineupBadge">✓ Full Lineup</span>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-undo" onclick="undoLastPlay()">Undo</button>
+      <button class="btn-lock" id="lockInBtn" onclick="recordPlay()">Lock In Play #14</button>
+    </div>
+  </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
@@ -206,19 +305,46 @@
       "#5 August Mandulak", "#6 Will Parker", "#8 Thoreson Edwards", "#9 Conan Iakopo",
       "#11 Jaren Taitano", "#13 Toby Fejaran", "#14 Jibreel Gonzalez", "#15 Cruz Nichols",
       "#18 Samuel Thomas", "#23 Donovan Schade-Graeber", "#25 Gavin Kortyka",
-      "#32 Darian Gonzalez Montez", "#33 Jacob Rule", "#40 Jason McIntosh-Barela",
-      "#42 Julian Avila", "#44 Alonzo Gray", "#45 Colt Kragerud", "#50 Daniel Moreno Olivares",
-      "#54 Brayden Steinmetz", "#61 Roman Parker-McKenna", "#63 Cayden Lemay",
-      "#66 Alvaro Gonzalez-Alcala", "#72 Huck Holscher", "#77 Calvin Brennan",
-      "#80 Kaine Chacon", "#82 Preston Zucco", "#92 Forest Jolliffe", "#99 Hayden Santangelo"
+      "#32 Darian Gonzalez Montez", "#33 Jacob Rule", "#42 Julian Avila",
+      "#44 Alonzo Gray", "#45 Colt Kragerud", "#50 Daniel Moreno Olivares",
+      "#54 Brayden Steinmetz", "#61 Roman Parker-McKenna", "#63 Cayden Lemay"
     ];
 
     let activePlayers = new Set();
     let playerCounts = {};
+    let playerMetQuarters = {};
     let disabledPlayers = new Set();
+    let playNumber = 14;
+    let currentQuarter = "Q3";
     let editMode = false;
 
-    // Menu Controls
+    // Default stats to match screenshot visualization
+    roster.forEach(p => {
+      playerCounts[p] = 0;
+      playerMetQuarters[p] = null;
+    });
+
+    // Mock initial state based on image
+    playerMetQuarters["#1 Sam James"] = "Q1"; playerCounts["#1 Sam James"] = 10;
+    playerMetQuarters["#2 Mikai Rios"] = "Q1"; playerCounts["#2 Mikai Rios"] = 10;
+    playerMetQuarters["#3 Chase Daniel"] = "Q1"; playerCounts["#3 Chase Daniel"] = 10;
+    playerMetQuarters["#6 Will Parker"] = "Q1"; playerCounts["#6 Will Parker"] = 10;
+    playerMetQuarters["#8 Thoreson Edwards"] = "Q1"; playerCounts["#8 Thoreson Edwards"] = 10;
+    playerMetQuarters["#14 Jibreel Gonzalez"] = "Q1"; playerCounts["#14 Jibreel Gonzalez"] = 10;
+    playerMetQuarters["#15 Cruz Nichols"] = "Q2"; playerCounts["#15 Cruz Nichols"] = 10;
+    playerMetQuarters["#18 Samuel Thomas"] = "Q1"; playerCounts["#18 Samuel Thomas"] = 10;
+
+    playerCounts["#13 Toby Fejaran"] = 1;
+    playerCounts["#23 Donovan Schade-Graeber"] = 2;
+    playerCounts["#25 Gavin Kortyka"] = 3;
+    playerCounts["#32 Darian Gonzalez Montez"] = 2;
+    playerCounts["#33 Jacob Rule"] = 1;
+    playerCounts["#42 Julian Avila"] = 5;
+    playerCounts["#44 Alonzo Gray"] = 1;
+    playerCounts["#45 Colt Kragerud"] = 2;
+    playerCounts["#63 Cayden Lemay"] = 8;
+
+    // Context Menu Handling
     function toggleMenu(event) {
       event.stopPropagation();
       document.getElementById("contextMenu").classList.toggle("show");
@@ -233,112 +359,133 @@
     function toggleEditMode() {
       closeMenu();
       editMode = !editMode;
-      const status = document.getElementById("status");
-      if (status) status.innerText = editMode ? "Edit Mode Active (Tap player to mark OUT)" : "Ready";
+      alert(editMode ? "Edit Mode Enabled: Tap players to mark OUT." : "Edit Mode Disabled.");
       renderRoster();
     }
 
     function syncData() {
       closeMenu();
-      const status = document.getElementById("status");
-      if (status) status.innerText = "Syncing with cloud...";
-      setTimeout(() => {
-        if (status) status.innerText = "Synced";
-      }, 1000);
+      alert("Synced with cloud server.");
     }
 
     function resetGameData() {
       closeMenu();
-      if (confirm("Are you sure you want to reset all play counts and active selections?")) {
+      if (confirm("Reset current game tracking?")) {
         activePlayers.clear();
-        disabledPlayers.clear();
-        roster.forEach(p => playerCounts[p] = 0);
+        playNumber = 1;
+        roster.forEach(p => { playerCounts[p] = 0; playerMetQuarters[p] = null; });
         renderRoster();
-        const status = document.getElementById("status");
-        if (status) status.innerText = "Game reset.";
+        updateBottomPanel();
       }
+    }
+
+    function selectQuarter(q) {
+      currentQuarter = q;
+      document.querySelectorAll('.q-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText === q);
+      });
     }
 
     function renderRoster() {
       const grid = document.getElementById("rosterGrid");
       if (!grid) return;
-      
       grid.innerHTML = "";
 
       roster.forEach(player => {
         const count = playerCounts[player] || 0;
-        const isDisabled = disabledPlayers.has(player);
+        const metQ = playerMetQuarters[player];
         const isActive = activePlayers.has(player);
+        const isDisabled = disabledPlayers.has(player);
 
         const card = document.createElement("div");
         card.className = `card ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`;
-        
+
         card.onclick = () => {
           if (editMode) {
-            if (disabledPlayers.has(player)) {
-              disabledPlayers.delete(player);
-            } else {
-              disabledPlayers.add(player);
-              activePlayers.delete(player);
-            }
+            if (disabledPlayers.has(player)) disabledPlayers.delete(player);
+            else { disabledPlayers.add(player); activePlayers.delete(player); }
           } else if (!isDisabled) {
-            if (activePlayers.has(player)) {
-              activePlayers.delete(player);
-            } else {
-              activePlayers.add(player);
-            }
+            if (activePlayers.has(player)) activePlayers.delete(player);
+            else activePlayers.add(player);
           }
           renderRoster();
+          updateBottomPanel();
         };
 
-        const parts = player.split(" ");
-        const num = parts[0];
-        const name = parts.slice(1).join(" ");
+        let statusText = `Plays: ${count}`;
+        let dotClass = "";
 
-        let badge = "";
         if (isDisabled) {
-          badge = `<span class="badge" style="background:rgba(220,38,38,0.2);color:#f87171;">OUT</span>`;
-        } else if (count >= 10) {
-          badge = `<span class="badge badge-met">✓ 10+</span>`;
-        } else {
-          badge = `<span class="badge badge-unmet">${count}/10</span>`;
+          statusText = "OUT";
+        } else if (metQ) {
+          statusText = `Met (${metQ})`;
+          dotClass = "dot-met";
+        } else if (isActive) {
+          dotClass = "dot-active";
         }
 
         card.innerHTML = `
-          <div class="number">${num}</div>
-          <div class="name">${name}</div>
-          <div class="count">${badge}</div>
+          <div class="card-info">
+            <div class="card-name">${player}</div>
+            <div class="card-status">${statusText}</div>
+          </div>
+          <div class="status-dot ${dotClass}"></div>
         `;
         grid.appendChild(card);
       });
     }
 
-    function recordPlay() {
-      const userEl = document.getElementById("userInput");
-      const user = userEl ? userEl.value.trim() : "";
+    function updateBottomPanel() {
+      const count = activePlayers.size;
+      const counterText = document.getElementById("playCounterText");
+      const lockBtn = document.getElementById("lockInBtn");
+      const badge = document.getElementById("lineupBadge");
 
-      if (!user) {
-        alert("Please enter your name/initials before logging plays.");
-        return;
+      if (counterText) counterText.innerText = `Play #${playNumber} • On Field: ${count} / 11`;
+      if (lockBtn) lockBtn.innerText = `Lock In Play #${playNumber}`;
+
+      if (badge) {
+        if (count === 11) {
+          badge.style.display = "inline";
+          badge.innerText = "✓ Full Lineup";
+          badge.style.color = "var(--green-accent)";
+        } else {
+          badge.style.display = "inline";
+          badge.innerText = `${count} Players`;
+          badge.style.color = "var(--text-muted)";
+        }
       }
+    }
+
+    function recordPlay() {
       if (activePlayers.size === 0) {
-        alert("Select active players on the field first.");
+        alert("Select players before locking in the play.");
         return;
       }
 
       activePlayers.forEach(player => {
         playerCounts[player] = (playerCounts[player] || 0) + 1;
+        if (playerCounts[player] >= 10 && !playerMetQuarters[player]) {
+          playerMetQuarters[player] = currentQuarter;
+        }
       });
 
-      const status = document.getElementById("status");
-      if (status) status.innerText = `Logged play for ${activePlayers.size} players.`;
-
+      playNumber++;
+      activePlayers.clear();
       renderRoster();
+      updateBottomPanel();
+    }
+
+    function undoLastPlay() {
+      if (playNumber > 1) {
+        playNumber--;
+        updateBottomPanel();
+      }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      roster.forEach(p => playerCounts[p] = 0);
       renderRoster();
+      updateBottomPanel();
     });
   </script>
 </body>
