@@ -32,7 +32,7 @@
       position: relative;
     }
 
-    /* Top Navigation / Context Menu Styles */
+    /* Context Menu Styles */
     .menu-container {
       position: relative;
     }
@@ -97,7 +97,7 @@
       color: #f87171;
     }
 
-    /* Application Layout */
+    /* Original Control Panel Layout */
     .controls {
       display: flex;
       gap: 8px;
@@ -127,6 +127,7 @@
 
     .btn:hover { background: var(--primary-hover); }
 
+    /* Original Roster Grid & Card Styling */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -141,6 +142,7 @@
       text-align: center;
       cursor: pointer;
       user-select: none;
+      position: relative;
     }
 
     .card.active {
@@ -157,6 +159,15 @@
     .card .number { font-size: 1.2rem; font-weight: bold; }
     .card .name { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
     .card .count { font-size: 0.85rem; font-weight: 600; margin-top: 6px; }
+
+    .badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .badge-met { background: rgba(22, 163, 74, 0.2); color: #4ade80; }
+    .badge-unmet { background: rgba(217, 119, 6, 0.2); color: #fbbf24; }
   </style>
 </head>
 <body>
@@ -167,14 +178,14 @@
       <small id="status" style="color: var(--muted);">Ready</small>
     </div>
 
-    <!-- Top Right Context Menu -->
+    <!-- Context Menu in Header -->
     <div class="menu-container">
       <button class="menu-btn" onclick="toggleMenu(event)">⚙️ Menu ▾</button>
       <div class="dropdown-menu" id="contextMenu">
-        <button class="dropdown-item" onclick="toggleEditMode()">✏️ Edit Roster</button>
-        <button class="dropdown-item" onclick="syncData()">🔄 Sync Data</button>
-        <a class="dropdown-item" href="review.html" target="_blank" onclick="closeMenu()">📊 Review Page</a>
-        <button class="dropdown-item danger" onclick="resetGameData()">⚠️ Reset Game</button>
+        <button class="dropdown-item" onclick="toggleEditMode()">✏️ Edit</button>
+        <button class="dropdown-item" onclick="syncData()">🔄 Sync</button>
+        <a class="dropdown-item" href="review.html" target="_blank" onclick="closeMenu()">📊 Review</a>
+        <button class="dropdown-item danger" onclick="resetGameData()">⚠️ Reset</button>
       </div>
     </div>
   </div>
@@ -203,8 +214,11 @@
     ];
 
     let activePlayers = new Set();
+    let playerCounts = {};
+    let disabledPlayers = new Set();
     let editMode = false;
 
+    // Menu Controls
     function toggleMenu(event) {
       event.stopPropagation();
       document.getElementById("contextMenu").classList.toggle("show");
@@ -214,30 +228,34 @@
       document.getElementById("contextMenu").classList.remove("show");
     }
 
-    // Close menu when clicking anywhere else on the screen
     window.addEventListener("click", () => closeMenu());
 
     function toggleEditMode() {
       closeMenu();
       editMode = !editMode;
-      alert(editMode ? "Edit Mode ON: Click players to mark them OUT." : "Edit Mode OFF.");
+      const status = document.getElementById("status");
+      if (status) status.innerText = editMode ? "Edit Mode Active (Tap player to mark OUT)" : "Ready";
       renderRoster();
     }
 
     function syncData() {
       closeMenu();
-      document.getElementById("status").innerText = "Syncing with cloud...";
+      const status = document.getElementById("status");
+      if (status) status.innerText = "Syncing with cloud...";
       setTimeout(() => {
-        document.getElementById("status").innerText = "Synced";
+        if (status) status.innerText = "Synced";
       }, 1000);
     }
 
     function resetGameData() {
       closeMenu();
-      if (confirm("Are you sure you want to reset all play counts for this game locally?")) {
+      if (confirm("Are you sure you want to reset all play counts and active selections?")) {
         activePlayers.clear();
+        disabledPlayers.clear();
+        roster.forEach(p => playerCounts[p] = 0);
         renderRoster();
-        document.getElementById("status").innerText = "Game reset locally.";
+        const status = document.getElementById("status");
+        if (status) status.innerText = "Game reset.";
       }
     }
 
@@ -248,13 +266,27 @@
       grid.innerHTML = "";
 
       roster.forEach(player => {
+        const count = playerCounts[player] || 0;
+        const isDisabled = disabledPlayers.has(player);
+        const isActive = activePlayers.has(player);
+
         const card = document.createElement("div");
-        card.className = `card ${activePlayers.has(player) ? 'active' : ''}`;
+        card.className = `card ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`;
+        
         card.onclick = () => {
-          if (activePlayers.has(player)) {
-            activePlayers.delete(player);
-          } else {
-            activePlayers.add(player);
+          if (editMode) {
+            if (disabledPlayers.has(player)) {
+              disabledPlayers.delete(player);
+            } else {
+              disabledPlayers.add(player);
+              activePlayers.delete(player);
+            }
+          } else if (!isDisabled) {
+            if (activePlayers.has(player)) {
+              activePlayers.delete(player);
+            } else {
+              activePlayers.add(player);
+            }
           }
           renderRoster();
         };
@@ -263,16 +295,28 @@
         const num = parts[0];
         const name = parts.slice(1).join(" ");
 
+        let badge = "";
+        if (isDisabled) {
+          badge = `<span class="badge" style="background:rgba(220,38,38,0.2);color:#f87171;">OUT</span>`;
+        } else if (count >= 10) {
+          badge = `<span class="badge badge-met">✓ 10+</span>`;
+        } else {
+          badge = `<span class="badge badge-unmet">${count}/10</span>`;
+        }
+
         card.innerHTML = `
           <div class="number">${num}</div>
           <div class="name">${name}</div>
+          <div class="count">${badge}</div>
         `;
         grid.appendChild(card);
       });
     }
 
     function recordPlay() {
-      const user = document.getElementById("userInput").value.trim();
+      const userEl = document.getElementById("userInput");
+      const user = userEl ? userEl.value.trim() : "";
+
       if (!user) {
         alert("Please enter your name/initials before logging plays.");
         return;
@@ -282,10 +326,18 @@
         return;
       }
 
-      document.getElementById("status").innerText = `Logged play with ${activePlayers.size} players.`;
+      activePlayers.forEach(player => {
+        playerCounts[player] = (playerCounts[player] || 0) + 1;
+      });
+
+      const status = document.getElementById("status");
+      if (status) status.innerText = `Logged play for ${activePlayers.size} players.`;
+
+      renderRoster();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      roster.forEach(p => playerCounts[p] = 0);
       renderRoster();
     });
   </script>
