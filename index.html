@@ -6,487 +6,820 @@
   <title>Falcons Play Plotter</title>
   <style>
     :root {
-      --bg: #0b1120;
-      --card-bg: #151e32;
-      --card-border: #23314d;
-      --active-card-bg: #1a294d;
-      --active-card-border: #3b82f6;
-      --text-main: #ffffff;
-      --text-muted: #8e9bb0;
-      --text-sub: #64748b;
-      --blue-accent: #3b82f6;
-      --green-accent: #22c55e;
-      --green-bg: rgba(34, 197, 94, 0.15);
-      --red-accent: #ef4444;
-      --btn-gray: #1e293b;
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: var(--bg); color: var(--text-main); padding: 12px; padding-bottom: 140px; max-width: 500px; margin: 0 auto; }
-
-    /* Top Navigation Header */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 12px;
-      position: relative;
-    }
-
-    .meta-info {
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-
-    .meta-info div {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .meta-label { color: var(--text-muted); }
-    .meta-value { font-weight: 600; text-decoration: underline; color: var(--text-main); }
-
-    /* Context Menu / Dropdown */
-    .menu-container { position: relative; }
-
-    .menu-btn {
-      background: var(--btn-gray);
-      color: var(--text-main);
-      border: 1px solid var(--card-border);
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.85rem;
-    }
-
-    .dropdown-menu {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 110%;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-      min-width: 150px;
-      z-index: 100;
-      overflow: hidden;
-    }
-
-    .dropdown-menu.show { display: block; }
-
-    .dropdown-item {
-      display: block;
-      width: 100%;
-      padding: 10px 14px;
-      background: none;
-      border: none;
-      color: var(--text-main);
-      text-align: left;
-      font-size: 0.85rem;
-      cursor: pointer;
-      text-decoration: none;
-      border-bottom: 1px solid var(--card-border);
-    }
-
-    .dropdown-item:last-child { border-bottom: none; }
-    .dropdown-item:hover { background: var(--card-border); }
-    .dropdown-item.danger { color: #f87171; }
-
-    /* 2-Column Grid Layout */
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    /* Player Cards matching exact UI */
-    .card {
-      background: var(--card-bg);
-      border: 1.5px solid var(--card-border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       user-select: none;
-      min-height: 52px;
     }
 
-    .card.active {
-      background: var(--active-card-bg);
-      border-color: var(--active-card-border);
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding-bottom: 140px; /* Space reserved for the bottom sticky deck */
     }
 
-    .card.disabled {
-      opacity: 0.35;
-      text-decoration: line-through;
+    /* Top Navigation Bar */
+    .top-bar {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    .card-info {
+    .session-info {
       display: flex;
       flex-direction: column;
       gap: 2px;
     }
 
-    .card-name {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .card-status {
-      font-size: 0.75rem;
+    .session-item {
+      font-size: 0.8rem;
       color: var(--text-muted);
+      cursor: pointer;
     }
 
-    .card.active .card-status { color: #93c5fd; }
-
-    /* Status Dots */
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--card-border);
-      flex-shrink: 0;
+    .session-item strong {
+      color: var(--text-main);
+      text-decoration: underline;
+      text-decoration-style: dotted;
     }
 
-    .status-dot.dot-met {
-      background: var(--green-accent);
-      box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
-    }
-
-    .status-dot.dot-active {
-      background: var(--blue-accent);
-      box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
-    }
-
-    /* Sticky Bottom Controls Area */
-    .bottom-panel {
-      position: fixed;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 500px;
-      background: var(--bg);
-      padding: 10px 12px 20px 12px;
-      border-top: 1px solid var(--card-border);
-      z-index: 90;
-    }
-
-    /* Quarter Selectors */
-    .quarter-tabs {
+    .header-actions {
       display: flex;
       gap: 6px;
-      margin-bottom: 8px;
     }
 
-    .q-btn {
-      flex: 1;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      padding: 8px 0;
+    .btn-sm {
+      background-color: var(--border);
+      color: var(--text-main);
+      border: none;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-width: 55px;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-sm.active {
+      background-color: var(--warning);
+      color: #000;
+    }
+
+    .btn-sm.sync-success {
+      background-color: var(--success);
+      color: #fff;
+    }
+
+    .btn-sm:disabled {
+      opacity: 0.85;
+      cursor: not-allowed;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 10px;
+      height: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Compact Roster Grid */
+    .roster-container {
+      padding: 10px 10px 0 10px;
+    }
+
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    @media (min-width: 480px) {
+      .roster-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+    }
+
+    .player-chip {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
       border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .player-chip.selected {
+      border-color: var(--primary);
+      background-color: rgba(37, 99, 235, 0.2);
+    }
+
+    .player-chip.met {
+      border-color: var(--success);
+    }
+
+    .player-chip.disabled-player {
+      opacity: 0.35;
+      background-color: #0f172a;
+      border-color: #1e293b;
+    }
+
+    .player-chip.edit-mode-active {
+      border-style: dashed;
+      border-color: var(--warning);
+    }
+
+    .chip-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chip-name {
+      font-weight: 600;
+      font-size: 0.82rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chip-badge {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--border);
+      flex-shrink: 0;
+      margin-left: 6px;
+    }
+
+    .player-chip.selected .status-dot {
+      background-color: var(--primary);
+    }
+
+    .player-chip.met .status-dot {
+      background-color: var(--success);
+    }
+
+    /* Fixed Bottom Control Dock */
+    .bottom-dock {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--card-bg);
+      border-top: 1px solid var(--border);
+      padding: 8px 12px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.4);
+    }
+
+    .qtr-selector {
+      display: flex;
+      gap: 6px;
+    }
+
+    .qtr-btn {
+      flex: 1;
+      padding: 6px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       cursor: pointer;
       text-align: center;
     }
 
-    .q-btn.active {
-      background: var(--blue-accent);
-      color: var(--text-main);
-      border-color: var(--blue-accent);
+    .qtr-btn.active {
+      background-color: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
     }
 
-    /* Action Bar Status */
-    .play-status-bar {
+    .status-banner {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      background-color: var(--bg-color);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary);
+    }
+
+    .play-title {
       font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .lineup-warning {
+      font-size: 0.8rem;
       font-weight: 600;
-      padding: 0 4px;
     }
 
-    .lineup-indicator {
-      color: var(--green-accent);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+    .warning-under { color: var(--warning); }
+    .warning-over { color: var(--danger); }
+    .warning-valid { color: var(--success); }
 
-    /* Action Buttons */
-    .action-row {
+    .action-bar {
       display: flex;
       gap: 8px;
     }
 
-    .btn-undo {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 12px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      width: 30%;
+    .btn-action {
+      flex: 2;
+      background-color: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.95rem;
       cursor: pointer;
     }
 
-    .btn-lock {
-      background: var(--blue-accent);
-      border: none;
+    .btn-action:active {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      flex: 1;
+      background-color: var(--border);
       color: var(--text-main);
-      padding: 12px;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 0.95rem;
-      width: 70%;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
       cursor: pointer;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 320px;
+    }
+
+    .modal-card h3 { font-size: 1rem; margin-bottom: 10px; }
+
+    .form-group {
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label { font-size: 0.8rem; }
+
+    .form-group input[type="number"] {
+      padding: 6px;
+      background: var(--bg-color);
+      border: 1px solid var(--border);
+      color: #fff;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation / Context Header -->
-  <div class="header">
-    <div class="meta-info">
-      <div><span class="meta-label">Plotter:</span> <span class="meta-value" id="plotterName">ApexWing22</span></div>
-      <div><span class="meta-label">Game:</span> <span class="meta-value" id="gameName">Game 9/14/2026</span></div>
+  <!-- Top Header Bar -->
+  <div class="top-bar">
+    <div class="session-info">
+      <div class="session-item" onclick="changeUsername()">Plotter: <strong id="displayUser">...</strong></div>
+      <div class="session-item" onclick="changeGameName()">Game: <strong id="displayGame">...</strong></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-sm" id="btnEditMode" onclick="toggleEditMode()">Edit</button>
+      <button class="btn-sm" id="btnSync" onclick="syncToGoogleSheet()">Sync</button>
+      <button class="btn-sm" onclick="resetGame()">Reset</button>
+    </div>
+  </div>
+
+  <!-- Player Roster Grid -->
+  <div class="roster-container">
+    <div class="roster-grid" id="playerGrid"></div>
+  </div>
+
+  <!-- Fixed Bottom Dock: Quarters, Play Banner, and Action Buttons -->
+  <div class="bottom-dock">
+    <div class="qtr-selector">
+      <div class="qtr-btn active" onclick="setQtr(1)">Q1</div>
+      <div class="qtr-btn" onclick="setQtr(2)">Q2</div>
+      <div class="qtr-btn" onclick="setQtr(3)">Q3</div>
+      <div class="qtr-btn" onclick="setQtr(4)">Q4</div>
     </div>
 
-    <div class="menu-container">
-      <button class="menu-btn" onclick="toggleMenu(event)">Menu ▾</button>
-      <div class="dropdown-menu" id="contextMenu">
-        <button class="dropdown-item" onclick="toggleEditMode()">✏️ Edit</button>
-        <button class="dropdown-item" onclick="syncData()">🔄 Sync</button>
-        <a class="dropdown-item" href="review.html" target="_blank" onclick="closeMenu()">📊 Review</a>
-        <button class="dropdown-item danger" onclick="resetGameData()">⚠️ Reset</button>
+    <div class="status-banner">
+      <div class="play-title" id="playCountHeader">Play #1 • On Field: 0 / 11</div>
+      <div class="lineup-warning warning-under" id="lineupWarning">⚠️ Need 11 players</div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn-secondary" onclick="undoLastPlay()">Undo</button>
+      <button class="btn-action" onclick="lockInPlay()">Lock In Play #<span id="btnPlayNum">1</span></button>
+    </div>
+  </div>
+
+  <!-- Edit Player Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-card">
+      <h3 id="modalPlayerTitle">Edit Player</h3>
+      <div class="form-group">
+        <label>Adjust Play Count:</label>
+        <input type="number" id="modalPlayCount" min="0" value="0">
+      </div>
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="modalDisabled">
+        <label for="modalDisabled">Mark Out / Absent / Injured</label>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-secondary" style="flex:1" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-action" style="flex:1" onclick="savePlayerEdit()">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- Player Grid -->
-  <div class="grid" id="rosterGrid"></div>
-
-  <!-- Bottom Panel controls -->
-  <div class="bottom-panel">
-    <div class="quarter-tabs">
-      <button class="q-btn" onclick="selectQuarter('Q1')">Q1</button>
-      <button class="q-btn" onclick="selectQuarter('Q2')">Q2</button>
-      <button class="q-btn active" id="btnQ3" onclick="selectQuarter('Q3')">Q3</button>
-      <button class="q-btn" onclick="selectQuarter('Q4')">Q4</button>
-    </div>
-
-    <div class="play-status-bar">
-      <span id="playCounterText">Play #14 • On Field: 0 / 11</span>
-      <span class="lineup-indicator" id="lineupBadge">✓ Full Lineup</span>
-    </div>
-
-    <div class="action-row">
-      <button class="btn-undo" onclick="undoLastPlay()">Undo</button>
-      <button class="btn-lock" id="lockInBtn" onclick="recordPlay()">Lock In Play #14</button>
-    </div>
-  </div>
-
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
-
     const roster = [
       "#1 Sam James", "#2 Mikai Rios", "#3 Chase Daniel", "#4 Riley Lesperance",
       "#5 August Mandulak", "#6 Will Parker", "#8 Thoreson Edwards", "#9 Conan Iakopo",
       "#11 Jaren Taitano", "#13 Toby Fejaran", "#14 Jibreel Gonzalez", "#15 Cruz Nichols",
       "#18 Samuel Thomas", "#23 Donovan Schade-Graeber", "#25 Gavin Kortyka",
-      "#32 Darian Gonzalez Montez", "#33 Jacob Rule", "#42 Julian Avila",
-      "#44 Alonzo Gray", "#45 Colt Kragerud", "#50 Daniel Moreno Olivares",
-      "#54 Brayden Steinmetz", "#61 Roman Parker-McKenna", "#63 Cayden Lemay"
+      "#32 Darian Gonzalez Montez", "#33 Jacob Rule", "#40 Jason McIntosh-Barela",
+      "#42 Julian Avila", "#44 Alonzo Gray", "#45 Colt Kragerud", "#50 Daniel Moreno Olivares",
+      "#54 Brayden Steinmetz", "#61 Roman Parker-McKenna", "#63 Cayden Lemay",
+      "#66 Alvaro Gonzalez-Alcala", "#72 Huck Holscher", "#77 Calvin Brennan",
+      "#80 Kaine Chacon", "#82 Preston Zucco", "#92 Forest Jolliffe", "#99 Hayden Santangelo"
     ];
 
+    let currentUser = "";
+    let currentGame = "";
+    let currentQtr = 1;
+    let playNumber = 1;
+    let isEditMode = false;
+    let editingPlayer = null;
     let activePlayers = new Set();
-    let playerCounts = {};
-    let playerMetQuarters = {};
-    let disabledPlayers = new Set();
-    let playNumber = 14;
-    let currentQuarter = "Q3";
-    let editMode = false;
+    let playHistory = [];
+    let playerStats = roster.reduce((acc, name) => { 
+      acc[name] = { total: 0, qtrMet: null, disabled: false }; 
+      return acc; 
+    }, {});
 
-    // Default stats to match screenshot visualization
-    roster.forEach(p => {
-      playerCounts[p] = 0;
-      playerMetQuarters[p] = null;
-    });
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
 
-    // Mock initial state based on image
-    playerMetQuarters["#1 Sam James"] = "Q1"; playerCounts["#1 Sam James"] = 10;
-    playerMetQuarters["#2 Mikai Rios"] = "Q1"; playerCounts["#2 Mikai Rios"] = 10;
-    playerMetQuarters["#3 Chase Daniel"] = "Q1"; playerCounts["#3 Chase Daniel"] = 10;
-    playerMetQuarters["#6 Will Parker"] = "Q1"; playerCounts["#6 Will Parker"] = 10;
-    playerMetQuarters["#8 Thoreson Edwards"] = "Q1"; playerCounts["#8 Thoreson Edwards"] = 10;
-    playerMetQuarters["#14 Jibreel Gonzalez"] = "Q1"; playerCounts["#14 Jibreel Gonzalez"] = 10;
-    playerMetQuarters["#15 Cruz Nichols"] = "Q2"; playerCounts["#15 Cruz Nichols"] = 10;
-    playerMetQuarters["#18 Samuel Thomas"] = "Q1"; playerCounts["#18 Samuel Thomas"] = 10;
-
-    playerCounts["#13 Toby Fejaran"] = 1;
-    playerCounts["#23 Donovan Schade-Graeber"] = 2;
-    playerCounts["#25 Gavin Kortyka"] = 3;
-    playerCounts["#32 Darian Gonzalez Montez"] = 2;
-    playerCounts["#33 Jacob Rule"] = 1;
-    playerCounts["#42 Julian Avila"] = 5;
-    playerCounts["#44 Alonzo Gray"] = 1;
-    playerCounts["#45 Colt Kragerud"] = 2;
-    playerCounts["#63 Cayden Lemay"] = 8;
-
-    // Context Menu Handling
-    function toggleMenu(event) {
-      event.stopPropagation();
-      document.getElementById("contextMenu").classList.toggle("show");
+    function generateFunUsername() {
+      const adjectives = ["Bold", "Swift", "Iron", "Storm", "Apex", "Shadow", "Alpha", "Turbo"];
+      const nouns = ["Falcon", "Hawk", "Wing", "Talent", "Plotter", "Scout", "Coach", "Eagle"];
+      const num = Math.floor(Math.random() * 90) + 10;
+      const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const noun = nouns[Math.floor(Math.random() * nouns.length)];
+      return `${adj}${noun}${num}`;
     }
 
-    function closeMenu() {
-      document.getElementById("contextMenu").classList.remove("show");
+    function getDefaultGameName() {
+      const today = new Date();
+      const month = today.getMonth() + 1;
+      const day = today.getDate();
+      const year = today.getFullYear();
+      return `Game ${month}/${day}/${year}`;
     }
 
-    window.addEventListener("click", () => closeMenu());
+    function initUserAndGame() {
+      let savedUser = localStorage.getItem("falcons_user_name");
+      if (!savedUser) {
+        const autoName = generateFunUsername();
+        const entered = prompt("Enter your Plotter Name / Handle:", autoName);
+        savedUser = (entered && entered.trim() !== "") ? entered.trim() : autoName;
+        localStorage.setItem("falcons_user_name", savedUser);
+      }
+      currentUser = savedUser;
+
+      let savedGame = localStorage.getItem("falcons_game_name");
+      if (!savedGame) {
+        const defaultGame = getDefaultGameName();
+        const entered = prompt("Enter Game Title:", defaultGame);
+        savedGame = (entered && entered.trim() !== "") ? entered.trim() : defaultGame;
+        localStorage.setItem("falcons_game_name", savedGame);
+      }
+      currentGame = savedGame;
+
+      updateSessionBar();
+    }
+
+    function changeUsername() {
+      const updated = prompt("Update your Plotter Name:", currentUser);
+      if (updated && updated.trim() !== "") {
+        currentUser = updated.trim();
+        localStorage.setItem("falcons_user_name", currentUser);
+        
+        playHistory.forEach(item => { item.user = currentUser; });
+
+        updateSessionBar();
+        saveToLocalStorage();
+        render();
+      }
+    }
+
+    function changeGameName() {
+      const updated = prompt("Update Game Title:", currentGame);
+      if (updated && updated.trim() !== "") {
+        currentGame = updated.trim();
+        localStorage.setItem("falcons_game_name", currentGame);
+        
+        playHistory.forEach(item => { item.game = currentGame; });
+
+        updateSessionBar();
+        saveToLocalStorage();
+        render();
+      }
+    }
+
+    function updateSessionBar() {
+      document.getElementById("displayUser").innerText = currentUser;
+      document.getElementById("displayGame").innerText = currentGame;
+    }
+
+    function saveToLocalStorage() {
+      const data = { currentUser, currentGame, currentQtr, playNumber, activePlayers: Array.from(activePlayers), playHistory, playerStats };
+      localStorage.setItem("falcons_play_plotter_data", JSON.stringify(data));
+    }
+
+    function loadFromLocalStorage() {
+      initUserAndGame();
+      const saved = localStorage.getItem("falcons_play_plotter_data");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          currentQtr = parsed.currentQtr || 1;
+          playNumber = parsed.playNumber || 1;
+          activePlayers = new Set(parsed.activePlayers || []);
+          playHistory = parsed.playHistory || [];
+          playerStats = parsed.playerStats || playerStats;
+          
+          document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
+            btn.classList.toggle("active", idx + 1 === currentQtr);
+          });
+        } catch (e) { console.error(e); }
+      }
+    }
+
+    function resetGame() {
+      if (confirm("Start a new game session? (This will clear current play counts)")) {
+        localStorage.removeItem("falcons_play_plotter_data");
+        localStorage.removeItem("falcons_game_name");
+        location.reload();
+      }
+    }
 
     function toggleEditMode() {
-      closeMenu();
-      editMode = !editMode;
-      alert(editMode ? "Edit Mode Enabled: Tap players to mark OUT." : "Edit Mode Disabled.");
-      renderRoster();
+      isEditMode = !isEditMode;
+      const btn = document.getElementById("btnEditMode");
+      btn.classList.toggle("active", isEditMode);
+      btn.innerText = isEditMode ? "Done" : "Edit";
+      render();
     }
 
-    function syncData() {
-      closeMenu();
-      alert("Synced with cloud server.");
+    function openEditModal(name) {
+      editingPlayer = name;
+      const stats = playerStats[name];
+      document.getElementById("modalPlayerTitle").innerText = `Edit: ${name}`;
+      document.getElementById("modalPlayCount").value = stats.total;
+      document.getElementById("modalDisabled").checked = !!stats.disabled;
+      document.getElementById("editModal").style.display = "flex";
     }
 
-    function resetGameData() {
-      closeMenu();
-      if (confirm("Reset current game tracking?")) {
-        activePlayers.clear();
-        playNumber = 1;
-        roster.forEach(p => { playerCounts[p] = 0; playerMetQuarters[p] = null; });
-        renderRoster();
-        updateBottomPanel();
+    function closeEditModal() {
+      editingPlayer = null;
+      document.getElementById("editModal").style.display = "none";
+    }
+
+    function savePlayerEdit() {
+      if (!editingPlayer) return;
+      const stats = playerStats[editingPlayer];
+      const newTotal = parseInt(document.getElementById("modalPlayCount").value, 10) || 0;
+      const isDisabled = document.getElementById("modalDisabled").checked;
+
+      const oldTotal = stats.total;
+      const oldDisabled = stats.disabled;
+
+      if (oldTotal !== newTotal) {
+        playHistory.push({
+          type: "MANUAL_ADJUSTMENT",
+          user: currentUser,
+          game: currentGame,
+          play: playNumber,
+          quarter: currentQtr,
+          player: editingPlayer,
+          oldValue: oldTotal,
+          newValue: newTotal,
+          note: `Manual count update: ${oldTotal} -> ${newTotal}`
+        });
       }
+
+      stats.total = newTotal;
+      stats.disabled = isDisabled;
+
+      if (stats.total >= 10 && !stats.qtrMet) {
+        stats.qtrMet = `Q${currentQtr}`;
+      } else if (stats.total < 10) {
+        stats.qtrMet = null;
+      }
+
+      if (isDisabled) {
+        activePlayers.delete(editingPlayer);
+        if (oldDisabled !== isDisabled) {
+          playHistory.push({
+            type: "PLAYER_DISABLED",
+            user: currentUser,
+            game: currentGame,
+            play: playNumber,
+            quarter: currentQtr,
+            player: editingPlayer,
+            note: "Player marked out/disabled"
+          });
+        }
+      }
+
+      saveToLocalStorage();
+      closeEditModal();
+      render();
     }
 
-    function selectQuarter(q) {
-      currentQuarter = q;
-      document.querySelectorAll('.q-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.innerText === q);
+    function render() {
+      const gridEl = document.getElementById("playerGrid");
+      gridEl.innerHTML = "";
+      const count = activePlayers.size;
+      
+      document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${count} / 11`;
+      document.getElementById("btnPlayNum").innerText = playNumber;
+
+      const warnEl = document.getElementById("lineupWarning");
+      if (count < 11) {
+        const diff = 11 - count;
+        warnEl.innerText = `⚠️ Need ${diff} more`;
+        warnEl.className = "lineup-warning warning-under";
+      } else if (count > 11) {
+        const diff = count - 11;
+        warnEl.innerText = `🚨 Exceeds by ${diff}`;
+        warnEl.className = "lineup-warning warning-over";
+      } else {
+        warnEl.innerText = "✓ Full Lineup";
+        warnEl.className = "lineup-warning warning-valid";
+      }
+
+      const sortedRoster = [...roster].sort((a, b) => {
+        const disA = playerStats[a].disabled ? 1 : 0;
+        const disB = playerStats[b].disabled ? 1 : 0;
+        return disA - disB;
       });
-    }
 
-    function renderRoster() {
-      const grid = document.getElementById("rosterGrid");
-      if (!grid) return;
-      grid.innerHTML = "";
+      sortedRoster.forEach(name => {
+        const stats = playerStats[name];
+        const isSelected = activePlayers.has(name);
+        const isMet = stats.total >= 10;
+        const isDisabled = stats.disabled;
 
-      roster.forEach(player => {
-        const count = playerCounts[player] || 0;
-        const metQ = playerMetQuarters[player];
-        const isActive = activePlayers.has(player);
-        const isDisabled = disabledPlayers.has(player);
-
-        const card = document.createElement("div");
-        card.className = `card ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`;
-
-        card.onclick = () => {
-          if (editMode) {
-            if (disabledPlayers.has(player)) disabledPlayers.delete(player);
-            else { disabledPlayers.add(player); activePlayers.delete(player); }
-          } else if (!isDisabled) {
-            if (activePlayers.has(player)) activePlayers.delete(player);
-            else activePlayers.add(player);
+        const chip = document.createElement("div");
+        chip.className = `player-chip ${isSelected ? 'selected' : ''} ${isMet ? 'met' : ''} ${isDisabled ? 'disabled-player' : ''} ${isEditMode ? 'edit-mode-active' : ''}`;
+        
+        chip.onclick = () => {
+          if (isEditMode) {
+            openEditModal(name);
+          } else {
+            if (!isDisabled) togglePlayer(name);
           }
-          renderRoster();
-          updateBottomPanel();
         };
 
-        let statusText = `Plays: ${count}`;
-        let dotClass = "";
-
+        let badgeText = `Plays: ${stats.total}`;
         if (isDisabled) {
-          statusText = "OUT";
-        } else if (metQ) {
-          statusText = `Met (${metQ})`;
-          dotClass = "dot-met";
-        } else if (isActive) {
-          dotClass = "dot-active";
+          badgeText = `OUT (${stats.total})`;
+        } else if (isMet) {
+          badgeText = `Met (${stats.qtrMet})`;
         }
 
-        card.innerHTML = `
-          <div class="card-info">
-            <div class="card-name">${player}</div>
-            <div class="card-status">${statusText}</div>
+        chip.innerHTML = `
+          <div class="chip-info">
+            <span class="chip-name">${name}</span>
+            <span class="chip-badge">${badgeText}</span>
           </div>
-          <div class="status-dot ${dotClass}"></div>
+          <div class="status-dot"></div>
         `;
-        grid.appendChild(card);
+        gridEl.appendChild(chip);
       });
     }
 
-    function updateBottomPanel() {
-      const count = activePlayers.size;
-      const counterText = document.getElementById("playCounterText");
-      const lockBtn = document.getElementById("lockInBtn");
-      const badge = document.getElementById("lineupBadge");
-
-      if (counterText) counterText.innerText = `Play #${playNumber} • On Field: ${count} / 11`;
-      if (lockBtn) lockBtn.innerText = `Lock In Play #${playNumber}`;
-
-      if (badge) {
-        if (count === 11) {
-          badge.style.display = "inline";
-          badge.innerText = "✓ Full Lineup";
-          badge.style.color = "var(--green-accent)";
-        } else {
-          badge.style.display = "inline";
-          badge.innerText = `${count} Players`;
-          badge.style.color = "var(--text-muted)";
-        }
-      }
+    function togglePlayer(name) {
+      if (activePlayers.has(name)) { activePlayers.delete(name); } 
+      else { activePlayers.add(name); }
+      saveToLocalStorage();
+      render();
     }
 
-    function recordPlay() {
-      if (activePlayers.size === 0) {
-        alert("Select players before locking in the play.");
-        return;
+    function setQtr(q) {
+      currentQtr = q;
+      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => { btn.classList.toggle("active", idx + 1 === q); });
+      saveToLocalStorage();
+    }
+
+    function lockInPlay() {
+      const count = activePlayers.size;
+
+      if (count === 0) { 
+        alert("Select active players first!"); 
+        return; 
       }
 
-      activePlayers.forEach(player => {
-        playerCounts[player] = (playerCounts[player] || 0) + 1;
-        if (playerCounts[player] >= 10 && !playerMetQuarters[player]) {
-          playerMetQuarters[player] = currentQuarter;
+      if (count < 11) {
+        if (!confirm(`You currently have only ${count} player(s) selected (expected 11).\n\nDo you still want to lock in this play?`)) {
+          return;
+        }
+      } else if (count > 11) {
+        if (!confirm(`You currently have ${count} players selected (exceeds 11 by ${count - 11}).\n\nDo you still want to lock in this play?`)) {
+          return;
+        }
+      }
+
+      playHistory.push({
+        type: "PLAY",
+        user: currentUser,
+        game: currentGame,
+        play: playNumber,
+        quarter: currentQtr,
+        players: Array.from(activePlayers)
+      });
+
+      activePlayers.forEach(name => {
+        playerStats[name].total += 1;
+        if (playerStats[name].total >= 10 && !playerStats[name].qtrMet) {
+          playerStats[name].qtrMet = `Q${currentQtr}`;
         }
       });
 
       playNumber++;
-      activePlayers.clear();
-      renderRoster();
-      updateBottomPanel();
+      saveToLocalStorage();
+      render();
     }
 
     function undoLastPlay() {
-      if (playNumber > 1) {
-        playNumber--;
-        updateBottomPanel();
+      let lastPlayIdx = -1;
+      for (let i = playHistory.length - 1; i >= 0; i--) {
+        if (playHistory[i].type === "PLAY") {
+          lastPlayIdx = i;
+          break;
+        }
+      }
+
+      if (lastPlayIdx === -1) {
+        alert("No locked plays to undo.");
+        return;
+      }
+
+      const playToUndo = playHistory.splice(lastPlayIdx, 1)[0];
+
+      playToUndo.players.forEach(name => {
+        if (playerStats[name]) {
+          playerStats[name].total = Math.max(0, playerStats[name].total - 1);
+          if (playerStats[name].total < 10) {
+            playerStats[name].qtrMet = null;
+          }
+        }
+      });
+
+      playNumber = playToUndo.play;
+      currentQtr = playToUndo.quarter;
+      activePlayers = new Set(playToUndo.players);
+
+      playHistory.push({
+        type: "UNDO",
+        user: currentUser,
+        game: currentGame,
+        undonePlay: playToUndo.play,
+        quarter: currentQtr,
+        note: `Undone play #${playToUndo.play}`
+      });
+
+      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
+        btn.classList.toggle("active", idx + 1 === currentQtr);
+      });
+
+      saveToLocalStorage();
+      render();
+    }
+
+    async function syncToGoogleSheet() {
+      if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+        alert("Paste your Google Apps Script Web App URL into SCRIPT_URL.");
+        return;
+      }
+
+      const btnSync = document.getElementById("btnSync");
+      
+      btnSync.disabled = true;
+      btnSync.classList.remove("sync-success");
+      btnSync.innerHTML = `<div class="spinner"></div> Syncing...`;
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user: currentUser,
+            game: currentGame,
+            playerStats: playerStats,
+            playHistory: playHistory
+          })
+        });
+
+        btnSync.classList.add("sync-success");
+        btnSync.innerHTML = `✓ Synced`;
+
+        setTimeout(() => {
+          btnSync.disabled = false;
+          btnSync.classList.remove("sync-success");
+          btnSync.innerText = "Sync";
+        }, 2000);
+
+      } catch (err) {
+        btnSync.disabled = false;
+        btnSync.innerText = "Sync";
+        alert("Error syncing: " + err.message);
       }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      renderRoster();
-      updateBottomPanel();
-    });
+    loadFromLocalStorage();
+    render();
   </script>
 </body>
 </html>
