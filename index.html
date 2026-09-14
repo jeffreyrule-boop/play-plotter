@@ -29,7 +29,7 @@
     body {
       background-color: var(--bg-color);
       color: var(--text-main);
-      padding-bottom: 140px; /* Space reserved for the bottom sticky deck */
+      padding-bottom: 140px; /* Space reserved for bottom sticky deck */
     }
 
     /* Top Navigation Bar */
@@ -65,15 +65,41 @@
 
     .header-actions {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       align-items: center;
+    }
+
+    /* Action Status Indicator */
+    .action-status {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 6px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border);
+    }
+
+    .action-status.syncing {
+      display: flex;
+      color: var(--text-main);
+    }
+
+    .action-status.synced {
+      display: flex;
+      color: #4ade80;
+      border-color: rgba(22, 163, 74, 0.4);
+      background-color: rgba(22, 163, 74, 0.1);
     }
 
     .btn-sm {
       background-color: var(--border);
       color: var(--text-main);
       border: none;
-      padding: 5px 8px;
+      padding: 5px 10px;
       border-radius: 6px;
       font-size: 0.75rem;
       font-weight: 600;
@@ -82,23 +108,17 @@
       align-items: center;
       justify-content: center;
       gap: 4px;
-      min-width: 55px;
       transition: background-color 0.2s ease;
     }
 
-    .btn-sm.active {
+    .btn-sm.btn-done-editing {
       background-color: var(--warning);
       color: #000;
+      display: none;
     }
 
-    .btn-sm.sync-success {
-      background-color: var(--success);
-      color: #fff;
-    }
-
-    .btn-sm:disabled {
-      opacity: 0.85;
-      cursor: not-allowed;
+    .btn-sm.btn-done-editing.show {
+      display: inline-flex;
     }
 
     /* Context Dropdown Menu */
@@ -155,10 +175,10 @@
 
     /* Loading Spinner */
     .spinner {
-      width: 10px;
-      height: 10px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #ffffff;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-top-color: var(--primary);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -412,11 +432,20 @@
     </div>
     
     <div class="header-actions">
+      <!-- Syncing / Status Indicator (Left of Menu) -->
+      <div class="action-status" id="actionStatus">
+        <div class="spinner" id="statusSpinner"></div>
+        <span id="statusText">Syncing...</span>
+      </div>
+
+      <!-- Done Editing Toggle Button -->
+      <button class="btn-sm btn-done-editing" id="btnDoneEditing" onclick="toggleEditMode()">Done Editing</button>
+
       <!-- Context Dropdown Menu -->
       <div class="menu-container">
         <button class="btn-sm" onclick="toggleMenu(event)">Menu ▾</button>
         <div class="dropdown-menu" id="contextMenu">
-          <button class="dropdown-item" onclick="handleMenuEdit()">✏️ Edit</button>
+          <button class="dropdown-item" id="menuEditItem" onclick="handleMenuEdit()">✏️ Edit</button>
           <button class="dropdown-item" onclick="handleMenuSync()">🔄 Sync</button>
           <a class="dropdown-item" href="review.html" target="_blank" onclick="closeMenu()">📊 Review</a>
           <button class="dropdown-item danger" onclick="handleMenuReset()">⚠️ Reset</button>
@@ -497,7 +526,7 @@
 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
 
-    /* Context Menu Toggle Logic */
+    /* Context Menu & Header Action Logic */
     function toggleMenu(event) {
       event.stopPropagation();
       document.getElementById("contextMenu").classList.toggle("show");
@@ -707,6 +736,18 @@
       document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${count} / 11`;
       document.getElementById("btnPlayNum").innerText = playNumber;
 
+      // Update Edit Mode UI controls
+      const btnDoneEditing = document.getElementById("btnDoneEditing");
+      const menuEditItem = document.getElementById("menuEditItem");
+      
+      if (isEditMode) {
+        btnDoneEditing.classList.add("show");
+        menuEditItem.innerText = "✓ Done Editing";
+      } else {
+        btnDoneEditing.classList.remove("show");
+        menuEditItem.innerText = "✏️ Edit";
+      }
+
       const warnEl = document.getElementById("lineupWarning");
       if (count < 11) {
         const diff = 11 - count;
@@ -866,6 +907,15 @@
         return;
       }
 
+      const statusEl = document.getElementById("actionStatus");
+      const spinnerEl = document.getElementById("statusSpinner");
+      const textEl = document.getElementById("statusText");
+
+      // Show Syncing Status
+      statusEl.className = "action-status syncing";
+      spinnerEl.style.display = "block";
+      textEl.innerText = "Syncing...";
+
       try {
         await fetch(SCRIPT_URL, {
           method: "POST",
@@ -879,10 +929,18 @@
           })
         });
 
-        alert("Synced with cloud server.");
+        // Show Synced Status
+        statusEl.className = "action-status synced";
+        spinnerEl.style.display = "none";
+        textEl.innerText = "✓ Synced";
+
+        setTimeout(() => {
+          statusEl.className = "action-status";
+        }, 3000);
 
       } catch (err) {
         alert("Error syncing: " + err.message);
+        statusEl.className = "action-status";
       }
     }
 
