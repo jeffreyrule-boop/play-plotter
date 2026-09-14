@@ -106,8 +106,8 @@
       "#32 Darian Gonzalez Montez", "#33 Jacob Rule", "#40 Jason McIntosh-Barela",
       "#42 Julian Avila", "#44 Alonzo Gray", "#45 Colt Kragerud", "#50 Daniel Moreno Olivares",
       "#54 Brayden Steinmetz", "#61 Roman Parker-McKenna", "#63 Cayden Lemay",
-      "#72 Huck Holscher", "#77 Calvin Brennan", "#80 Kaine Chacon", "#82 Preston Zucco",
-      "#92 Forest Jolliffe", "#99 Hayden Santangelo", "#66 Alvaro Gonzalez-Alcala"
+      "#66 Alvaro Gonzalez-Alcala", "#72 Huck Holscher", "#77 Calvin Brennan",
+      "#80 Kaine Chacon", "#82 Preston Zucco", "#92 Forest Jolliffe", "#99 Hayden Santangelo"
     ];
 
     let currentQtr = 1;
@@ -184,7 +184,6 @@
       const oldTotal = stats.total;
       const oldDisabled = stats.disabled;
 
-      // Annotate log history if play count changed manually
       if (oldTotal !== newTotal) {
         playHistory.push({
           type: "MANUAL_ADJUSTMENT",
@@ -200,14 +199,12 @@
       stats.total = newTotal;
       stats.disabled = isDisabled;
 
-      // Update Qtr Met badge status
       if (stats.total >= 10 && !stats.qtrMet) {
         stats.qtrMet = `Q${currentQtr}`;
       } else if (stats.total < 10) {
         stats.qtrMet = null;
       }
 
-      // If disabled, automatically remove from active field selection
       if (isDisabled) {
         activePlayers.delete(editingPlayer);
         if (oldDisabled !== isDisabled) {
@@ -232,7 +229,6 @@
       document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${activePlayers.size} / 11`;
       document.getElementById("btnPlayNum").innerText = playNumber;
 
-      // Sort roster: active/enabled players first, disabled players moved to the bottom
       const sortedRoster = [...roster].sort((a, b) => {
         const disA = playerStats[a].disabled ? 1 : 0;
         const disB = playerStats[b].disabled ? 1 : 0;
