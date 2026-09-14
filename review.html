@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Falcons Play Plotter - Coach Review</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --success: #16a34a;
+      --warning: #d97706;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 16px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    .btn-refresh { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 8px; text-align: center; }
+    .stat-val { font-size: 1.5rem; font-weight: 700; }
+    .stat-lbl { font-size: 0.75rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    th { background-color: #111827; color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
+    .badge { padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
+    .badge-met { background: rgba(22, 163, 74, 0.2); color: #4ade80; border: 1px solid var(--success); }
+    .badge-unmet { background: rgba(217, 119, 6, 0.2); color: #fbbf24; border: 1px solid var(--warning); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h2>Coach Participation Review</h2>
+      <small id="lastUpdated" style="color: var(--muted);">Loading data...</small>
+    </div>
+    <button class="btn-refresh" onclick="fetchReviewData()">🔄 Refresh</button>
+  </div>
+
+  <div class="stats-summary">
+    <div class="stat-card">
+      <div class="stat-val" id="metCount">0</div>
+      <div class="stat-lbl">Requirements Met (10+)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="unmetCount">0</div>
+      <div class="stat-lbl">Needs Snaps (&lt;10)</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Player</th>
+        <th>Snaps</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="rosterTable">
+      <tr><td colspan="3">Fetching live data...</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
+
+    async function fetchReviewData() {
+      document.getElementById("lastUpdated").innerText = "Refreshing...";
+      try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+
+        if (data.error) {
+          alert("Error: " + data.error);
+          return;
+        }
+
+        document.getElementById("lastUpdated").innerText = "Updated: " + data.lastUpdated;
+        render(data.roster || []);
+      } catch (err) {
+        document.getElementById("lastUpdated").innerText = "Error loading data.";
+        console.error(err);
+      }
+    }
+
+    function render(roster) {
+      let met = 0;
+      let unmet = 0;
+      const tbody = document.getElementById("rosterTable");
+      tbody.innerHTML = "";
+
+      roster.forEach(player => {
+        const isMet = player.totalSnaps >= 10;
+        if (player.status !== "OUT / Disabled") {
+          if (isMet) met++; else unmet++;
+        }
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><strong>${player.name}</strong></td>
+          <td>${player.totalSnaps}</td>
+          <td>
+            <span class="badge ${isMet ? 'badge-met' : 'badge-unmet'}">
+              ${isMet ? 'Met (' + player.qtrMet + ')' : 'Needs ' + (10 - player.totalSnaps) + ' more'}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById("metCount").innerText = met;
+      document.getElementById("unmetCount").innerText = unmet;
+    }
+
+    fetchReviewData();
+  </script>
+</body>
+</html>
