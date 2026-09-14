@@ -75,6 +75,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      user-select: none;
     }
 
     .user-pill.active {
@@ -106,7 +107,25 @@
 
     th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
 
-    th { background: #111827; color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
+    th { 
+      background: #111827; 
+      color: var(--muted); 
+      text-transform: uppercase; 
+      font-size: 0.7rem; 
+      letter-spacing: 0.05em; 
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    th:hover {
+      background: #1f2937;
+      color: var(--text);
+    }
+
+    th.sorted {
+      color: #60a5fa;
+    }
 
     .badge {
       padding: 3px 8px;
@@ -144,13 +163,7 @@
 
   <div class="table-container">
     <table>
-      <thead id="tableHeader">
-        <tr>
-          <th>Player</th>
-          <th>Max Snaps</th>
-          <th>Requirement</th>
-        </tr>
-      </thead>
+      <thead id="tableHeader"></thead>
       <tbody id="rosterTable">
         <tr><td colspan="3">Select a game to view stats.</td></tr>
       </tbody>
@@ -174,8 +187,11 @@
 
     let rawLogEntries = [];
     let availableGames = [];
-    let activeUsers = new Set();
     let userStates = {}; // username: boolean (enabled)
+    
+    // Sort State
+    let sortColumn = "maxSnaps"; // Default sort by Max Snaps
+    let sortDirection = "desc";   // "asc" or "desc"
 
     async function fetchLogData() {
       document.getElementById("lastUpdated").innerText = "Fetching live entries...";
@@ -214,7 +230,7 @@
         const opt = document.createElement("option");
         opt.value = game;
         opt.innerText = game;
-        if (idx === availableGames.length - 1) opt.selected = true; // Default to latest game
+        if (idx === availableGames.length - 1) opt.selected = true;
         select.appendChild(opt);
       });
     }
@@ -239,17 +255,30 @@
       });
     }
 
+    function setSort(colKey) {
+      if (sortColumn === colKey) {
+        // Toggle direction if clicking the same column
+        sortDirection = sortDirection === "asc" ? "desc" : "asc";
+      } else {
+        sortColumn = colKey;
+        // Default numbers/status to descending, names to ascending
+        sortDirection = colKey === "name" ? "asc" : "desc";
+      }
+      render();
+    }
+
+    function getSortIndicator(colKey) {
+      if (sortColumn !== colKey) return " ↕";
+      return sortDirection === "asc" ? " ▲" : " ▼";
+    }
+
     function render() {
       const selectedGame = document.getElementById("gameSelect").value;
       if (!selectedGame) return;
 
-      // Filter entries by game
       const gameEntries = rawLogEntries.filter(e => e.game === selectedGame);
-
-      // Detect all unique plotters for this game
       const gamePlotters = Array.from(new Set(gameEntries.map(e => e.user).filter(Boolean)));
       
-      // Update state for any newly discovered users
       gamePlotters.forEach(u => {
         if (userStates[u] === undefined) userStates[u] = true;
       });
@@ -258,7 +287,6 @@
 
       const enabledPlotters = gamePlotters.filter(u => userStates[u]);
 
-      // Calculate totals per player per plotter
       const userPlayerCounts = {};
       const playerDisabledStatus = {};
 
@@ -266,7 +294,7 @@
 
       gameEntries.forEach(entry => {
         const u = entry.user;
-        if (!userStates[u]) return; // Skip disabled users
+        if (!userStates[u]) return;
 
         if (entry.type === "PLAY" && entry.activePlayers) {
           entry.activePlayers.forEach(p => {
@@ -281,46 +309,97 @@
         }
       });
 
+      // Build Processed Roster Data Objects for Sorting
+      let tableData = roster.map(name => {
+        let maxSnaps = 0;
+        let userCounts = {};
+
+        enabledPlotters.forEach(u => {
+          const count = userPlayerCounts[u][name] || 0;
+          userCounts[u] = count;
+          if (count > maxSnaps) maxSnaps = count;
+        });
+
+        // Extract jersey number for proper numerical sorting on player names
+        const numMatch = name.match(/#(\d+)/);
+        const jerseyNum = numMatch ? parseInt(numMatch[1], 10) : 999;
+
+        return {
+          name,
+          jerseyNum,
+          userCounts,
+          maxSnaps,
+          isOut: !!playerDisabledStatus[name],
+          isMet: maxSnaps >= 10
+        };
+      });
+
+      // Sort Data
+      tableData.sort((a, b) => {
+        let valA, valB;
+
+        if (sortColumn === "name") {
+          valA = a.jerseyNum;
+          valB = b.jerseyNum;
+        } else if (sortColumn === "maxSnaps") {
+          valA = a.maxSnaps;
+          valB = b.maxSnaps;
+        } else if (sortColumn === "status") {
+          // Priority: Out (0), Unmet (1), Met (2)
+          valA = a.isOut ? 0 : (a.isMet ? 2 : 1);
+          valB = b.isOut ? 0 : (b.isMet ? 2 : 1);
+        } else if (sortColumn.startsWith("user_")) {
+          const userKey = sortColumn.replace("user_", "");
+          valA = a.userCounts[userKey] || 0;
+          valB = b.userCounts[userKey] || 0;
+        }
+
+        if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+        if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      });
+
       // Build Table Header
       const headerRow = document.getElementById("tableHeader");
-      let headerHTML = `<tr><th>Player</th>`;
+      let headerHTML = `<tr>
+        <th class="${sortColumn === 'name' ? 'sorted' : ''}" onclick="setSort('name')">Player${getSortIndicator('name')}</th>`;
+      
       enabledPlotters.forEach(u => {
-        headerHTML += `<th>${u}</th>`;
+        const colKey = `user_${u}`;
+        headerHTML += `<th class="${sortColumn === colKey ? 'sorted' : ''}" onclick="setSort('${colKey}')">${u}${getSortIndicator(colKey)}</th>`;
       });
-      headerHTML += `<th>Max Snaps</th><th>Requirement</th></tr>`;
+
+      headerHTML += `
+        <th class="${sortColumn === 'maxSnaps' ? 'sorted' : ''}" onclick="setSort('maxSnaps')">Max Snaps${getSortIndicator('maxSnaps')}</th>
+        <th class="${sortColumn === 'status' ? 'sorted' : ''}" onclick="setSort('status')">Requirement${getSortIndicator('status')}</th>
+      </tr>`;
       headerRow.innerHTML = headerHTML;
 
       // Build Table Body
       const tbody = document.getElementById("rosterTable");
       tbody.innerHTML = "";
 
-      roster.forEach(name => {
-        let maxSnaps = 0;
+      tableData.forEach(row => {
         let countsHTML = "";
 
         enabledPlotters.forEach(u => {
-          const count = userPlayerCounts[u][name] || 0;
-          if (count > maxSnaps) maxSnaps = count;
-          countsHTML += `<td>${count}</td>`;
+          countsHTML += `<td>${row.userCounts[u] || 0}</td>`;
         });
 
-        const isOut = playerDisabledStatus[name];
-        const isMet = maxSnaps >= 10;
-
         let statusBadge = "";
-        if (isOut) {
+        if (row.isOut) {
           statusBadge = `<span class="badge badge-out">OUT</span>`;
-        } else if (isMet) {
+        } else if (row.isMet) {
           statusBadge = `<span class="badge badge-met">✓ Met (10+)</span>`;
         } else {
-          statusBadge = `<span class="badge badge-unmet">Needs ${10 - maxSnaps} more</span>`;
+          statusBadge = `<span class="badge badge-unmet">Needs ${10 - row.maxSnaps} more</span>`;
         }
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td><strong>${name}</strong></td>
+          <td><strong>${row.name}</strong></td>
           ${countsHTML}
-          <td><strong>${maxSnaps}</strong></td>
+          <td><strong>${row.maxSnaps}</strong></td>
           <td>${statusBadge}</td>
         `;
         tbody.appendChild(tr);
