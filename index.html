@@ -81,7 +81,8 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      min-width: 60px;
+      min-width: 65px;
+      transition: background-color 0.2s ease;
     }
 
     .btn-sm.active {
@@ -89,8 +90,13 @@
       color: #000;
     }
 
+    .btn-sm.sync-success {
+      background-color: var(--success);
+      color: #fff;
+    }
+
     .btn-sm:disabled {
-      opacity: 0.7;
+      opacity: 0.85;
       cursor: not-allowed;
     }
 
@@ -763,10 +769,14 @@
       }
 
       const btnSync = document.getElementById("btnSync");
-      const originalText = btnSync.innerText;
-
+      
+      // Update UI state immediately
       btnSync.disabled = true;
+      btnSync.classList.remove("sync-success");
       btnSync.innerHTML = `<div class="spinner"></div> Syncing...`;
+
+      // Force browser paint before initiating network call
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       try {
         await fetch(SCRIPT_URL, {
@@ -780,12 +790,21 @@
             playHistory: playHistory
           })
         });
-        alert(`Synced data for ${currentUser} (${currentGame}) to Google Sheet!`);
+
+        // Show green success checkmark on button
+        btnSync.classList.add("sync-success");
+        btnSync.innerHTML = `✓ Synced`;
+
+        setTimeout(() => {
+          btnSync.disabled = false;
+          btnSync.classList.remove("sync-success");
+          btnSync.innerText = "Sync";
+        }, 2000);
+
       } catch (err) {
-        alert("Error syncing: " + err.message);
-      } finally {
         btnSync.disabled = false;
-        btnSync.innerText = originalText;
+        btnSync.innerText = "Sync";
+        alert("Error syncing: " + err.message);
       }
     }
 
