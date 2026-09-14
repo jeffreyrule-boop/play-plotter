@@ -66,6 +66,7 @@
     .header-actions {
       display: flex;
       gap: 6px;
+      align-items: center;
     }
 
     .btn-sm {
@@ -98,6 +99,58 @@
     .btn-sm:disabled {
       opacity: 0.85;
       cursor: not-allowed;
+    }
+
+    /* Context Dropdown Menu */
+    .menu-container {
+      position: relative;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 115%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      min-width: 130px;
+      z-index: 150;
+      overflow: hidden;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      color: var(--text-main);
+      text-align: left;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--border);
+    }
+
+    .dropdown-item.danger {
+      color: #f87171;
     }
 
     /* Loading Spinner */
@@ -357,10 +410,18 @@
       <div class="session-item" onclick="changeUsername()">Plotter: <strong id="displayUser">...</strong></div>
       <div class="session-item" onclick="changeGameName()">Game: <strong id="displayGame">...</strong></div>
     </div>
+    
     <div class="header-actions">
-      <button class="btn-sm" id="btnEditMode" onclick="toggleEditMode()">Edit</button>
-      <button class="btn-sm" id="btnSync" onclick="syncToGoogleSheet()">Sync</button>
-      <button class="btn-sm" onclick="resetGame()">Reset</button>
+      <!-- Context Dropdown Menu -->
+      <div class="menu-container">
+        <button class="btn-sm" onclick="toggleMenu(event)">Menu ▾</button>
+        <div class="dropdown-menu" id="contextMenu">
+          <button class="dropdown-item" onclick="handleMenuEdit()">✏️ Edit</button>
+          <button class="dropdown-item" onclick="handleMenuSync()">🔄 Sync</button>
+          <a class="dropdown-item" href="review.html" target="_blank" onclick="closeMenu()">📊 Review</a>
+          <button class="dropdown-item danger" onclick="handleMenuReset()">⚠️ Reset</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -435,6 +496,33 @@
     }, {});
 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
+
+    /* Context Menu Toggle Logic */
+    function toggleMenu(event) {
+      event.stopPropagation();
+      document.getElementById("contextMenu").classList.toggle("show");
+    }
+
+    function closeMenu() {
+      document.getElementById("contextMenu").classList.remove("show");
+    }
+
+    window.addEventListener("click", () => closeMenu());
+
+    function handleMenuEdit() {
+      closeMenu();
+      toggleEditMode();
+    }
+
+    function handleMenuSync() {
+      closeMenu();
+      syncToGoogleSheet();
+    }
+
+    function handleMenuReset() {
+      closeMenu();
+      resetGame();
+    }
 
     function generateFunUsername() {
       const adjectives = ["Bold", "Swift", "Iron", "Storm", "Apex", "Shadow", "Alpha", "Turbo"];
@@ -542,9 +630,6 @@
 
     function toggleEditMode() {
       isEditMode = !isEditMode;
-      const btn = document.getElementById("btnEditMode");
-      btn.classList.toggle("active", isEditMode);
-      btn.innerText = isEditMode ? "Done" : "Edit";
       render();
     }
 
@@ -781,14 +866,6 @@
         return;
       }
 
-      const btnSync = document.getElementById("btnSync");
-      
-      btnSync.disabled = true;
-      btnSync.classList.remove("sync-success");
-      btnSync.innerHTML = `<div class="spinner"></div> Syncing...`;
-
-      await new Promise(resolve => setTimeout(resolve, 50));
-
       try {
         await fetch(SCRIPT_URL, {
           method: "POST",
@@ -802,18 +879,9 @@
           })
         });
 
-        btnSync.classList.add("sync-success");
-        btnSync.innerHTML = `✓ Synced`;
-
-        setTimeout(() => {
-          btnSync.disabled = false;
-          btnSync.classList.remove("sync-success");
-          btnSync.innerText = "Sync";
-        }, 2000);
+        alert("Synced with cloud server.");
 
       } catch (err) {
-        btnSync.disabled = false;
-        btnSync.innerText = "Sync";
         alert("Error syncing: " + err.message);
       }
     }
