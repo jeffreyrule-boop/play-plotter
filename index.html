@@ -6,7 +6,7 @@
   <title>Liberty Falcons Play Plotter</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; padding: 0; background: #f0f2f5; color: #1c1e21; padding-bottom: 30px; }
+    body { margin: 0; padding: 0; background: #f0f2f5; color: #1c1e21; padding-bottom: 40px; }
     .header { position: sticky; top: 0; background: #1a365d; color: white; padding: 12px 16px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     .title { font-size: 18px; font-weight: bold; }
     .sub-title { font-size: 13px; color: #cbd5e0; margin-top: 2px; }
@@ -17,6 +17,7 @@
     .btn-lock { flex: 2; padding: 14px; background: #2b6cb0; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-align: center; }
     .btn-lock:active { background: #2c5282; }
     .btn-sync { flex: 1; padding: 14px; background: #2f855a; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-align: center; }
+    .btn-reset { padding: 14px; background: #e53e3e; color: white; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
     .player-list { padding: 12px 16px; }
     .player-card { display: flex; align-items: center; justify-content: space-between; background: white; padding: 12px 14px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none; }
     .player-card.selected { border-left: 6px solid #3182ce; }
@@ -48,6 +49,7 @@
   <div class="sticky-actions">
     <button class="btn-lock" onclick="lockInPlay()">LOCK IN PLAY <span id="btnPlayNum">1</span></button>
     <button class="btn-sync" onclick="syncToGoogleSheet()">Sync Sheet</button>
+    <button class="btn-reset" onclick="resetGame()">Reset</button>
   </div>
 
   <div class="player-list" id="playerList"></div>
@@ -72,6 +74,46 @@
     let playerStats = roster.reduce((acc, name) => { acc[name] = { total: 0, qtrMet: null }; return acc; }, {});
 
     const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+
+    // --- LOCAL STORAGE LOGIC ---
+    function saveToLocalStorage() {
+      const data = {
+        currentQtr: currentQtr,
+        playNumber: playNumber,
+        activePlayers: Array.from(activePlayers),
+        playHistory: playHistory,
+        playerStats: playerStats
+      };
+      localStorage.setItem("falcons_play_plotter_data", JSON.stringify(data));
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem("falcons_play_plotter_data");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          currentQtr = parsed.currentQtr || 1;
+          playNumber = parsed.playNumber || 1;
+          activePlayers = new Set(parsed.activePlayers || []);
+          playHistory = parsed.playHistory || [];
+          playerStats = parsed.playerStats || playerStats;
+          
+          // Sync UI quarter buttons
+          document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
+            btn.classList.toggle("active", idx + 1 === currentQtr);
+          });
+        } catch (e) {
+          console.error("Error loading local storage", e);
+        }
+      }
+    }
+
+    function resetGame() {
+      if (confirm("Are you sure you want to reset the current game data? This cannot be undone.")) {
+        localStorage.removeItem("falcons_play_plotter_data");
+        location.reload();
+      }
+    }
 
     function render() {
       const listEl = document.getElementById("playerList");
@@ -102,12 +144,14 @@
     function togglePlayer(name) {
       if (activePlayers.has(name)) { activePlayers.delete(name); } 
       else { activePlayers.add(name); }
+      saveToLocalStorage();
       render();
     }
 
     function setQtr(q) {
       currentQtr = q;
       document.querySelectorAll(".qtr-btn").forEach((btn, idx) => { btn.classList.toggle("active", idx + 1 === q); });
+      saveToLocalStorage();
     }
 
     function lockInPlay() {
@@ -123,6 +167,7 @@
       });
 
       playNumber++;
+      saveToLocalStorage();
       render();
     }
 
@@ -144,6 +189,8 @@
       }
     }
 
+    // Initialize application state
+    loadFromLocalStorage();
     render();
   </script>
 </body>
