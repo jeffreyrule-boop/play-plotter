@@ -3,121 +3,360 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Liberty Falcons Play Plotter</title>
+  <title>Falcons Play Plotter</title>
   <style>
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; padding: 0; background: #f0f2f5; color: #1c1e21; padding-bottom: 30px; }
-    
-    .session-bar { background: #0f172a; color: #94a3b8; font-size: 11px; padding: 4px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
-    .session-info { display: flex; gap: 8px; align-items: center; }
-    .session-tag { color: #f8fafc; font-weight: bold; }
-    .btn-text-action { background: none; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; text-decoration: underline; padding: 0; }
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+    }
 
-    .header { position: sticky; top: 0; background: #1a365d; color: white; padding: 8px 12px; z-index: 100; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-    .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .title { font-size: 16px; font-weight: bold; }
-    .sub-title { font-size: 12px; color: #cbd5e0; }
-    
-    .lineup-warning { margin-top: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-align: center; transition: all 0.2s ease; }
-    .warning-under { background: #feebc8; color: #742a2a; border: 1px solid #fbd38d; }
-    .warning-over { background: #fed7d7; color: #742a2a; border: 1px solid #feb2b2; }
-    .warning-valid { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
 
-    .qtr-selector { display: flex; gap: 4px; margin-top: 6px; }
-    .qtr-btn { flex: 1; padding: 4px; background: #2d3748; color: white; border: 1px solid #4a5568; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; }
-    .qtr-btn.active { background: #3182ce; border-color: #63b3ed; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding-bottom: 90px;
+    }
 
-    .sticky-actions { position: sticky; top: 122px; background: #edf2f7; padding: 6px 12px; z-index: 99; border-bottom: 1px solid #cbd5e0; display: flex; gap: 4px; flex-wrap: wrap; }
-    .btn-lock { flex: 2; padding: 10px; background: #2b6cb0; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
-    .btn-undo { padding: 10px 10px; background: #c53030; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
-    .btn-sync { flex: 1; padding: 10px; background: #2f855a; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
-    .btn-edit-mode { flex: 1; padding: 10px; background: #d69e2e; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
-    .btn-edit-mode.active { background: #dd6b20; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #dd6b20; }
-    .btn-reset { padding: 10px 8px; background: #718096; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+    /* Top Navigation Bar */
+    .top-bar {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-    .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 8px 12px; }
-    .player-chip { display: flex; align-items: center; justify-content: space-between; background: white; padding: 6px 8px; border-radius: 6px; border: 1.5px solid #cbd5e0; font-size: 12px; font-weight: bold; user-select: none; cursor: pointer; min-height: 38px; }
-    .player-chip.selected { background: #ebf8ff; border-color: #3182ce; color: #2b6cb0; box-shadow: inset 0 0 0 1px #3182ce; }
-    .player-chip.met { background: #f0fff4; border-color: #38a169; }
-    .player-chip.met.selected { background: #c6f6d5; border-color: #276749; color: #22543d; }
-    .player-chip.disabled-player { background: #edf2f7; border-color: #cbd5e0; color: #a0aec0; opacity: 0.6; }
-    .player-chip.edit-mode-active { border-style: dashed; }
-    
-    .chip-info { display: flex; flex-direction: column; overflow: hidden; }
-    .chip-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
-    .chip-badge { font-size: 10px; font-weight: normal; color: #718096; margin-top: 1px; }
-    .player-chip.selected .chip-badge { color: #2b6cb0; }
-    .player-chip.met .chip-badge { color: #276749; font-weight: bold; }
-    .player-chip.disabled-player .chip-badge { color: #a0aec0; }
-    
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #cbd5e0; flex-shrink: 0; }
-    .player-chip.selected .status-dot { background: #3182ce; border-color: #2b6cb0; }
+    .session-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
 
-    /* Modal Styles */
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; }
-    .modal-content { background: white; padding: 18px; border-radius: 8px; width: 85%; max-width: 340px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    .modal-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; }
-    .modal-field { margin-bottom: 12px; }
-    .modal-field label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #4a5568; }
-    .modal-field input[type="number"] { width: 100%; padding: 8px; font-size: 14px; border: 1px solid #cbd5e0; border-radius: 4px; }
-    .modal-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
-    .btn-modal-save { padding: 8px 14px; background: #3182ce; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-    .btn-modal-cancel { padding: 8px 14px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    .session-item {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .session-item strong {
+      color: var(--text-main);
+      text-decoration: underline;
+      text-decoration-style: dotted;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      background-color: var(--border);
+      color: var(--text-main);
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-sm.active {
+      background-color: var(--warning);
+      color: #000;
+    }
+
+    /* Quarter & Play Controls */
+    .control-panel {
+      padding: 12px 16px;
+      background-color: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .qtr-selector {
+      display: flex;
+      gap: 8px;
+    }
+
+    .qtr-btn {
+      flex: 1;
+      padding: 10px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .qtr-btn.active {
+      background-color: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .status-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--card-bg);
+      padding: 12px 16px;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .play-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .lineup-warning {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .warning-under { color: var(--warning); }
+    .warning-over { color: var(--danger); }
+    .warning-valid { color: var(--success); }
+
+    /* Player Roster Grid */
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      padding: 0 16px;
+    }
+
+    .player-chip {
+      background-color: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .player-chip.selected {
+      border-color: var(--primary);
+      background-color: rgba(37, 99, 235, 0.15);
+    }
+
+    .player-chip.met {
+      border-color: var(--success);
+    }
+
+    .player-chip.disabled-player {
+      opacity: 0.4;
+      background-color: #0f172a;
+      border-color: #1e293b;
+    }
+
+    .player-chip.edit-mode-active {
+      border-style: dashed;
+      border-color: var(--warning);
+    }
+
+    .chip-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chip-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .chip-badge {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--border);
+    }
+
+    .player-chip.selected .status-dot {
+      background-color: var(--primary);
+    }
+
+    .player-chip.met .status-dot {
+      background-color: var(--success);
+    }
+
+    /* Fixed Bottom Action Bar */
+    .action-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--card-bg);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .btn-action {
+      flex: 2;
+      background-color: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-action:active {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      flex: 1;
+      background-color: var(--border);
+      color: var(--text-main);
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Edit Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 360px;
+    }
+
+    .modal-card h3 { margin-bottom: 12px; }
+
+    .form-group {
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group input[type="number"] {
+      padding: 8px;
+      background: var(--bg-color);
+      border: 1px solid var(--border);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Session & Game Info Header -->
-  <div class="session-bar">
+  <!-- Header Section -->
+  <div class="top-bar">
     <div class="session-info">
-      <span>Plotter: <span id="displayUser" class="session-tag">--</span></span>
-      <button class="btn-text-action" onclick="changeUsername()">Rename</button>
+      <div class="session-item" onclick="changeUsername()">Plotter: <strong id="displayUser">...</strong></div>
+      <div class="session-item" onclick="changeGameName()">Game: <strong id="displayGame">...</strong></div>
     </div>
-    <div class="session-info">
-      <span>Game: <span id="displayGame" class="session-tag">--</span></span>
-      <button class="btn-text-action" onclick="changeGameName()">Change</button>
+    <div class="header-actions">
+      <button class="btn-sm" id="btnEditMode" onclick="toggleEditMode()">Edit Mode</button>
+      <button class="btn-sm" onclick="syncToGoogleSheet()">Sync</button>
+      <button class="btn-sm" onclick="resetGame()">Reset</button>
     </div>
   </div>
 
-  <div class="header">
-    <div class="header-top">
-      <div class="title">Liberty Falcons Plotter</div>
-      <div class="sub-title" id="playCountHeader">Play #1 • On Field: 0 / 11</div>
-    </div>
-    <div id="lineupWarning" class="lineup-warning warning-under">⚠️ Need 11 more players</div>
+  <!-- Quarter Selection & Play Banner -->
+  <div class="control-panel">
     <div class="qtr-selector">
       <div class="qtr-btn active" onclick="setQtr(1)">Q1</div>
       <div class="qtr-btn" onclick="setQtr(2)">Q2</div>
       <div class="qtr-btn" onclick="setQtr(3)">Q3</div>
       <div class="qtr-btn" onclick="setQtr(4)">Q4</div>
     </div>
+
+    <div class="status-banner">
+      <div class="play-title" id="playCountHeader">Play #1 • On Field: 0 / 11</div>
+      <div class="lineup-warning warning-under" id="lineupWarning">⚠️ Need 11 players</div>
+    </div>
   </div>
 
-  <div class="sticky-actions">
-    <button class="btn-lock" id="btnLock" onclick="lockInPlay()">LOCK IN PLAY <span id="btnPlayNum">1</span></button>
-    <button class="btn-undo" onclick="undoLastPlay()">Undo Play</button>
-    <button class="btn-sync" onclick="syncToGoogleSheet()">Sync</button>
-    <button class="btn-edit-mode" id="btnEditMode" onclick="toggleEditMode()">Edit Mode</button>
-    <button class="btn-reset" onclick="resetGame()">New Game</button>
+  <!-- Player Roster Grid -->
+  <div class="roster-grid" id="playerGrid"></div>
+
+  <!-- Bottom Lock / Undo Buttons -->
+  <div class="action-bar">
+    <button class="btn-secondary" onclick="undoLastPlay()">Undo Last</button>
+    <button class="btn-action" onclick="lockInPlay()">Lock In Play #<span id="btnPlayNum">1</span></button>
   </div>
 
-  <div class="player-grid" id="playerGrid"></div>
-
-  <!-- Modal for Player Editing -->
+  <!-- Edit Player Modal -->
   <div class="modal-overlay" id="editModal">
-    <div class="modal-content">
-      <div class="modal-title" id="modalPlayerTitle">Edit Player</div>
-      <div class="modal-field">
-        <label for="modalPlayCount">Total Plays Count:</label>
-        <input type="number" id="modalPlayCount" min="0" />
+    <div class="modal-card">
+      <h3 id="modalPlayerTitle">Edit Player</h3>
+      <div class="form-group">
+        <label>Adjust Play Count:</label>
+        <input type="number" id="modalPlayCount" min="0" value="0">
       </div>
-      <div class="modal-field" style="display: flex; align-items: center; gap: 8px;">
-        <input type="checkbox" id="modalDisabled" style="width: 18px; height: 18px;" />
-        <label for="modalDisabled" style="margin: 0;">Disable / Out of Game</label>
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="modalDisabled">
+        <label for="modalDisabled">Mark Out / Absent / Injured</label>
       </div>
-      <div class="modal-actions">
-        <button class="btn-modal-cancel" onclick="closeEditModal()">Cancel</button>
-        <button class="btn-modal-save" onclick="savePlayerEdit()">Save</button>
+      <div class="modal-buttons">
+        <button class="btn-secondary" style="flex:1" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-action" style="flex:1" onclick="savePlayerEdit()">Save</button>
       </div>
     </div>
   </div>
@@ -194,8 +433,14 @@
       if (updated && updated.trim() !== "") {
         currentUser = updated.trim();
         localStorage.setItem("falcons_user_name", currentUser);
+        
+        playHistory.forEach(item => {
+          item.user = currentUser;
+        });
+
         updateSessionBar();
         saveToLocalStorage();
+        render();
       }
     }
 
@@ -204,8 +449,14 @@
       if (updated && updated.trim() !== "") {
         currentGame = updated.trim();
         localStorage.setItem("falcons_game_name", currentGame);
+        
+        playHistory.forEach(item => {
+          item.game = currentGame;
+        });
+
         updateSessionBar();
         saveToLocalStorage();
+        render();
       }
     }
 
@@ -494,6 +745,7 @@
           body: JSON.stringify({
             user: currentUser,
             game: currentGame,
+            playerStats: playerStats,
             playHistory: playHistory
           })
         });
