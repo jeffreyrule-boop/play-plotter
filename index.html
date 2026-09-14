@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liberty Falcons Play Plotter</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; padding: 0; background: #f0f2f5; color: #1c1e21; padding-bottom: 30px; }
+    .header { position: sticky; top: 0; background: #1a365d; color: white; padding: 12px 16px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .title { font-size: 18px; font-weight: bold; }
+    .sub-title { font-size: 13px; color: #cbd5e0; margin-top: 2px; }
+    .qtr-selector { display: flex; gap: 6px; margin-top: 10px; }
+    .qtr-btn { flex: 1; padding: 6px; background: #2d3748; color: white; border: 1px solid #4a5568; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; }
+    .qtr-btn.active { background: #3182ce; border-color: #63b3ed; }
+    .sticky-actions { position: sticky; top: 96px; background: #edf2f7; padding: 10px 16px; z-index: 99; border-bottom: 1px solid #e2e8f0; display: flex; gap: 8px; }
+    .btn-lock { flex: 2; padding: 14px; background: #2b6cb0; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-align: center; }
+    .btn-lock:active { background: #2c5282; }
+    .btn-sync { flex: 1; padding: 14px; background: #2f855a; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-align: center; }
+    .player-list { padding: 12px 16px; }
+    .player-card { display: flex; align-items: center; justify-content: space-between; background: white; padding: 12px 14px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none; }
+    .player-card.selected { border-left: 6px solid #3182ce; }
+    .player-card.met { background: #c6f6d5; border-color: #9ae6b4; }
+    .player-card.met.selected { border-left: 6px solid #276749; }
+    .player-name { font-weight: bold; font-size: 15px; }
+    .player-stats { font-size: 12px; color: #4a5568; margin-top: 2px; }
+    .badge-met { background: #276749; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 6px; }
+    .checkbox-custom { width: 28px; height: 28px; border-radius: 6px; border: 2px solid #cbd5e0; display: flex; align-items: center; justify-content: center; background: white; font-weight: bold; color: white; }
+    .player-card.selected .checkbox-custom { background: #3182ce; border-color: #3182ce; }
+    .player-card.selected .checkbox-custom::after { content: "✓"; font-size: 18px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <div class="title">Liberty Falcons Plotter</div>
+      <div class="sub-title" id="playCountHeader">Play #1 • On Field: 0 / 11</div>
+    </div>
+    <div class="qtr-selector">
+      <div class="qtr-btn active" onclick="setQtr(1)">Q1</div>
+      <div class="qtr-btn" onclick="setQtr(2)">Q2</div>
+      <div class="qtr-btn" onclick="setQtr(3)">Q3</div>
+      <div class="qtr-btn" onclick="setQtr(4)">Q4</div>
+    </div>
+  </div>
+
+  <div class="sticky-actions">
+    <button class="btn-lock" onclick="lockInPlay()">LOCK IN PLAY <span id="btnPlayNum">1</span></button>
+    <button class="btn-sync" onclick="syncToGoogleSheet()">Sync Sheet</button>
+  </div>
+
+  <div class="player-list" id="playerList"></div>
+
+  <script>
+    const roster = [
+      "#1 Sam James", "#2 Mikai Rios", "#3 Chase Daniel", "#4 Riley Lesperance",
+      "#5 August Mandulak", "#6 Will Parker", "#8 Thoreson Edwards", "#9 Conan Iakopo",
+      "#11 Jaren Taitano", "#13 Toby Fejaran", "#14 Jibreel Gonzalez", "#15 Cruz Nichols",
+      "#18 Samuel Thomas", "#23 Donovan Schade-Graeber", "#25 Gavin Kortyka",
+      "#32 Darian Gonzalez Montez", "#33 Jacob Rule", "#40 Jason McIntosh-Barela",
+      "#42 Julian Avila", "#44 Alonzo Gray", "#45 Colt Kragerud", "#50 Daniel Moreno Olivares",
+      "#54 Brayden Steinmetz", "#61 Roman Parker-McKenna", "#63 Cayden Lemay",
+      "#72 Huck Holscher", "#77 Calvin Brennan", "#80 Kaine Chacon", "#82 Preston Zucco",
+      "#92 Forest Jolliffe", "#99 Hayden Santangelo", "Alvaro Gonzalez-Alcala"
+    ];
+
+    let currentQtr = 1;
+    let playNumber = 1;
+    let activePlayers = new Set();
+    let playHistory = [];
+    let playerStats = roster.reduce((acc, name) => { acc[name] = { total: 0, qtrMet: null }; return acc; }, {});
+
+    const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+
+    function render() {
+      const listEl = document.getElementById("playerList");
+      listEl.innerHTML = "";
+      document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${activePlayers.size} / 11`;
+      document.getElementById("btnPlayNum").innerText = playNumber;
+
+      roster.forEach(name => {
+        const stats = playerStats[name];
+        const isSelected = activePlayers.has(name);
+        const isMet = stats.total >= 10;
+
+        const card = document.createElement("div");
+        card.className = `player-card ${isSelected ? 'selected' : ''} ${isMet ? 'met' : ''}`;
+        card.onclick = () => togglePlayer(name);
+
+        card.innerHTML = `
+          <div>
+            <div class="player-name">${name} ${isMet ? `<span class="badge-met">Met (${stats.qtrMet})</span>` : ''}</div>
+            <div class="player-stats">Total Plays: ${stats.total}</div>
+          </div>
+          <div class="checkbox-custom"></div>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    function togglePlayer(name) {
+      if (activePlayers.has(name)) { activePlayers.delete(name); } 
+      else { activePlayers.add(name); }
+      render();
+    }
+
+    function setQtr(q) {
+      currentQtr = q;
+      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => { btn.classList.toggle("active", idx + 1 === q); });
+    }
+
+    function lockInPlay() {
+      if (activePlayers.size === 0) { alert("Select active players first!"); return; }
+
+      playHistory.push({ play: playNumber, quarter: currentQtr, players: Array.from(activePlayers) });
+
+      activePlayers.forEach(name => {
+        playerStats[name].total += 1;
+        if (playerStats[name].total >= 10 && !playerStats[name].qtrMet) {
+          playerStats[name].qtrMet = `Q${currentQtr}`;
+        }
+      });
+
+      playNumber++;
+      render();
+    }
+
+    async function syncToGoogleSheet() {
+      if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+        alert("Please paste your Google Apps Script Web App URL into the SCRIPT_URL variable.");
+        return;
+      }
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ playHistory: playHistory })
+        });
+        alert("Synced play history to Google Sheet!");
+      } catch (err) {
+        alert("Error syncing: " + err.message);
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
