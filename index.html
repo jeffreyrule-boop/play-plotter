@@ -8,12 +8,16 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; padding: 0; background: #f0f2f5; color: #1c1e21; padding-bottom: 30px; }
     
+    .session-bar { background: #0f172a; color: #94a3b8; font-size: 11px; padding: 4px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
+    .session-info { display: flex; gap: 8px; align-items: center; }
+    .session-tag { color: #f8fafc; font-weight: bold; }
+    .btn-text-action { background: none; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; text-decoration: underline; padding: 0; }
+
     .header { position: sticky; top: 0; background: #1a365d; color: white; padding: 8px 12px; z-index: 100; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
     .header-top { display: flex; justify-content: space-between; align-items: center; }
     .title { font-size: 16px; font-weight: bold; }
     .sub-title { font-size: 12px; color: #cbd5e0; }
     
-    /* Warning Status Banner */
     .lineup-warning { margin-top: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-align: center; transition: all 0.2s ease; }
     .warning-under { background: #feebc8; color: #742a2a; border: 1px solid #fbd38d; }
     .warning-over { background: #fed7d7; color: #742a2a; border: 1px solid #feb2b2; }
@@ -23,7 +27,7 @@
     .qtr-btn { flex: 1; padding: 4px; background: #2d3748; color: white; border: 1px solid #4a5568; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; }
     .qtr-btn.active { background: #3182ce; border-color: #63b3ed; }
 
-    .sticky-actions { position: sticky; top: 102px; background: #edf2f7; padding: 6px 12px; z-index: 99; border-bottom: 1px solid #cbd5e0; display: flex; gap: 4px; flex-wrap: wrap; }
+    .sticky-actions { position: sticky; top: 122px; background: #edf2f7; padding: 6px 12px; z-index: 99; border-bottom: 1px solid #cbd5e0; display: flex; gap: 4px; flex-wrap: wrap; }
     .btn-lock { flex: 2; padding: 10px; background: #2b6cb0; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
     .btn-undo { padding: 10px 10px; background: #c53030; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
     .btn-sync { flex: 1; padding: 10px; background: #2f855a; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
@@ -63,6 +67,18 @@
 </head>
 <body>
 
+  <!-- Session & Game Info Header -->
+  <div class="session-bar">
+    <div class="session-info">
+      <span>Plotter: <span id="displayUser" class="session-tag">--</span></span>
+      <button class="btn-text-action" onclick="changeUsername()">Rename</button>
+    </div>
+    <div class="session-info">
+      <span>Game: <span id="displayGame" class="session-tag">--</span></span>
+      <button class="btn-text-action" onclick="changeGameName()">Change</button>
+    </div>
+  </div>
+
   <div class="header">
     <div class="header-top">
       <div class="title">Liberty Falcons Plotter</div>
@@ -82,7 +98,7 @@
     <button class="btn-undo" onclick="undoLastPlay()">Undo Play</button>
     <button class="btn-sync" onclick="syncToGoogleSheet()">Sync</button>
     <button class="btn-edit-mode" id="btnEditMode" onclick="toggleEditMode()">Edit Mode</button>
-    <button class="btn-reset" onclick="resetGame()">Reset</button>
+    <button class="btn-reset" onclick="resetGame()">New Game</button>
   </div>
 
   <div class="player-grid" id="playerGrid"></div>
@@ -119,6 +135,8 @@
       "#80 Kaine Chacon", "#82 Preston Zucco", "#92 Forest Jolliffe", "#99 Hayden Santangelo"
     ];
 
+    let currentUser = "";
+    let currentGame = "";
     let currentQtr = 1;
     let playNumber = 1;
     let isEditMode = false;
@@ -132,12 +150,77 @@
 
     const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
 
+    function generateFunUsername() {
+      const adjectives = ["Bold", "Swift", "Iron", "Storm", "Apex", "Shadow", "Alpha", "Turbo"];
+      const nouns = ["Falcon", "Hawk", "Wing", "Talent", "Plotter", "Scout", "Coach", "Eagle"];
+      const num = Math.floor(Math.random() * 90) + 10;
+      const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const noun = nouns[Math.floor(Math.random() * nouns.length)];
+      return `${adj}${noun}${num}`;
+    }
+
+    function getDefaultGameName() {
+      const today = new Date();
+      const month = today.getMonth() + 1;
+      const day = today.getDate();
+      const year = today.getFullYear();
+      return `Game ${month}/${day}/${year}`;
+    }
+
+    function initUserAndGame() {
+      let savedUser = localStorage.getItem("falcons_user_name");
+      if (!savedUser) {
+        const autoName = generateFunUsername();
+        const entered = prompt("Enter your Plotter Name / Handle:", autoName);
+        savedUser = (entered && entered.trim() !== "") ? entered.trim() : autoName;
+        localStorage.setItem("falcons_user_name", savedUser);
+      }
+      currentUser = savedUser;
+
+      let savedGame = localStorage.getItem("falcons_game_name");
+      if (!savedGame) {
+        const defaultGame = getDefaultGameName();
+        const entered = prompt("Enter Game Title:", defaultGame);
+        savedGame = (entered && entered.trim() !== "") ? entered.trim() : defaultGame;
+        localStorage.setItem("falcons_game_name", savedGame);
+      }
+      currentGame = savedGame;
+
+      updateSessionBar();
+    }
+
+    function changeUsername() {
+      const updated = prompt("Update your Plotter Name:", currentUser);
+      if (updated && updated.trim() !== "") {
+        currentUser = updated.trim();
+        localStorage.setItem("falcons_user_name", currentUser);
+        updateSessionBar();
+        saveToLocalStorage();
+      }
+    }
+
+    function changeGameName() {
+      const updated = prompt("Update Game Title:", currentGame);
+      if (updated && updated.trim() !== "") {
+        currentGame = updated.trim();
+        localStorage.setItem("falcons_game_name", currentGame);
+        updateSessionBar();
+        saveToLocalStorage();
+      }
+    }
+
+    function updateSessionBar() {
+      document.getElementById("displayUser").innerText = currentUser;
+      document.getElementById("displayGame").innerText = currentGame;
+    }
+
     function saveToLocalStorage() {
-      const data = { currentQtr, playNumber, activePlayers: Array.from(activePlayers), playHistory, playerStats };
+      const data = { currentUser, currentGame, currentQtr, playNumber, activePlayers: Array.from(activePlayers), playHistory, playerStats };
       localStorage.setItem("falcons_play_plotter_data", JSON.stringify(data));
     }
 
     function loadFromLocalStorage() {
+      initUserAndGame();
       const saved = localStorage.getItem("falcons_play_plotter_data");
       if (saved) {
         try {
@@ -156,8 +239,9 @@
     }
 
     function resetGame() {
-      if (confirm("Reset current game data?")) {
+      if (confirm("Start a new game session? (This will clear current play counts)")) {
         localStorage.removeItem("falcons_play_plotter_data");
+        localStorage.removeItem("falcons_game_name");
         location.reload();
       }
     }
@@ -196,6 +280,8 @@
       if (oldTotal !== newTotal) {
         playHistory.push({
           type: "MANUAL_ADJUSTMENT",
+          user: currentUser,
+          game: currentGame,
           play: playNumber,
           quarter: currentQtr,
           player: editingPlayer,
@@ -219,6 +305,8 @@
         if (oldDisabled !== isDisabled) {
           playHistory.push({
             type: "PLAYER_DISABLED",
+            user: currentUser,
+            game: currentGame,
             play: playNumber,
             quarter: currentQtr,
             player: editingPlayer,
@@ -240,7 +328,6 @@
       document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${count} / 11`;
       document.getElementById("btnPlayNum").innerText = playNumber;
 
-      // Update Warning Badge
       const warnEl = document.getElementById("lineupWarning");
       if (count < 11) {
         const diff = 11 - count;
@@ -329,6 +416,8 @@
 
       playHistory.push({
         type: "PLAY",
+        user: currentUser,
+        game: currentGame,
         play: playNumber,
         quarter: currentQtr,
         players: Array.from(activePlayers)
@@ -377,6 +466,8 @@
 
       playHistory.push({
         type: "UNDO",
+        user: currentUser,
+        game: currentGame,
         undonePlay: playToUndo.play,
         quarter: currentQtr,
         note: `Undone play #${playToUndo.play}`
@@ -392,7 +483,7 @@
 
     async function syncToGoogleSheet() {
       if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-        alert("Paste your Google Apps Script Web App URL into line 108 (SCRIPT_URL).");
+        alert("Paste your Google Apps Script Web App URL into line 133 (SCRIPT_URL).");
         return;
       }
       try {
@@ -400,9 +491,13 @@
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ playHistory: playHistory })
+          body: JSON.stringify({
+            user: currentUser,
+            game: currentGame,
+            playHistory: playHistory
+          })
         });
-        alert("Synced play history and adjustments to Google Sheet!");
+        alert(`Synced data for ${currentUser} (${currentGame}) to Google Sheet!`);
       } catch (err) {
         alert("Error syncing: " + err.message);
       }
