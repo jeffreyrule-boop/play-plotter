@@ -222,7 +222,7 @@
     function populateGameSelect() {
       const select = document.getElementById("gameSelect");
       if (!select) return;
-      
+
       select.innerHTML = "";
 
       if (availableGames.length === 0) {
@@ -317,14 +317,17 @@
       });
 
       let tableData = roster.map(name => {
-        let maxSnaps = 0;
         let userCounts = {};
 
         enabledPlotters.forEach(u => {
-          const count = userPlayerCounts[u][name] || 0;
-          userCounts[u] = count;
-          if (count > maxSnaps) maxSnaps = count;
+          userCounts[u] = userPlayerCounts[u][name] || 0;
         });
+
+        // Calculate Minimum Snaps across enabled plotters
+        let minSnaps = 0;
+        if (enabledPlotters.length > 0) {
+          minSnaps = Math.min(...enabledPlotters.map(u => userCounts[u]));
+        }
 
         const numMatch = name.match(/#(\d+)/);
         const jerseyNum = numMatch ? parseInt(numMatch[1], 10) : 999;
@@ -333,9 +336,9 @@
           name,
           jerseyNum,
           userCounts,
-          maxSnaps,
+          minSnaps,
           isOut: !!playerDisabledStatus[name],
-          isMet: maxSnaps >= 10
+          isMet: minSnaps >= 10
         };
       });
 
@@ -346,9 +349,9 @@
         if (sortColumn === "name") {
           valA = a.jerseyNum;
           valB = b.jerseyNum;
-        } else if (sortColumn === "maxSnaps") {
-          valA = a.maxSnaps;
-          valB = b.maxSnaps;
+        } else if (sortColumn === "minSnaps") {
+          valA = a.minSnaps;
+          valB = b.minSnaps;
         } else if (sortColumn === "status") {
           valA = a.isOut ? 0 : (a.isMet ? 2 : 1);
           valB = b.isOut ? 0 : (b.isMet ? 2 : 1);
@@ -375,7 +378,7 @@
         });
 
         headerHTML += `
-          <th class="${sortColumn === 'maxSnaps' ? 'sorted' : ''}" onclick="setSort('maxSnaps')">Max Snaps${getSortIndicator('maxSnaps')}</th>
+          <th class="${sortColumn === 'minSnaps' ? 'sorted' : ''}" onclick="setSort('minSnaps')">Min Snaps${getSortIndicator('minSnaps')}</th>
           <th class="${sortColumn === 'status' ? 'sorted' : ''}" onclick="setSort('status')">Requirement${getSortIndicator('status')}</th>
         </tr>`;
         headerRow.innerHTML = headerHTML;
@@ -399,14 +402,14 @@
           } else if (row.isMet) {
             statusBadge = `<span class="badge badge-met">✓ Met (10+)</span>`;
           } else {
-            statusBadge = `<span class="badge badge-unmet">Needs ${10 - row.maxSnaps} more</span>`;
+            statusBadge = `<span class="badge badge-unmet">Needs ${10 - row.minSnaps} more</span>`;
           }
 
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td><strong>${row.name}</strong></td>
             ${countsHTML}
-            <td><strong>${row.maxSnaps}</strong></td>
+            <td><strong>${row.minSnaps}</strong></td>
             <td>${statusBadge}</td>
           `;
           tbody.appendChild(tr);
@@ -414,7 +417,6 @@
       }
     }
 
-    // Ensure DOM is fully parsed before executing initial fetch
     document.addEventListener("DOMContentLoaded", () => {
       fetchLogData();
     });
