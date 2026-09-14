@@ -77,11 +77,35 @@
       font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 60px;
     }
 
     .btn-sm.active {
       background-color: var(--warning);
       color: #000;
+    }
+
+    .btn-sm:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     /* Quarter & Play Controls */
@@ -313,7 +337,7 @@
     </div>
     <div class="header-actions">
       <button class="btn-sm" id="btnEditMode" onclick="toggleEditMode()">Edit Mode</button>
-      <button class="btn-sm" onclick="syncToGoogleSheet()">Sync</button>
+      <button class="btn-sm" id="btnSync" onclick="syncToGoogleSheet()">Sync</button>
       <button class="btn-sm" onclick="resetGame()">Reset</button>
     </div>
   </div>
@@ -737,6 +761,13 @@
         alert("Paste your Google Apps Script Web App URL into line 133 (SCRIPT_URL).");
         return;
       }
+
+      const btnSync = document.getElementById("btnSync");
+      const originalText = btnSync.innerText;
+
+      btnSync.disabled = true;
+      btnSync.innerHTML = `<div class="spinner"></div> Syncing...`;
+
       try {
         await fetch(SCRIPT_URL, {
           method: "POST",
@@ -752,6 +783,9 @@
         alert(`Synced data for ${currentUser} (${currentGame}) to Google Sheet!`);
       } catch (err) {
         alert("Error syncing: " + err.message);
+      } finally {
+        btnSync.disabled = false;
+        btnSync.innerText = originalText;
       }
     }
 
