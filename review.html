@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Falcons Play Plotter - Coach Review</title>
+  <title>Falcons Play Plotter - Multi-User Review</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -11,64 +11,174 @@
       --text: #f8fafc;
       --muted: #94a3b8;
       --border: #334155;
+      --primary: #2563eb;
       --success: #16a34a;
       --warning: #d97706;
+      --danger: #dc2626;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding: 16px; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-    .btn-refresh { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
-    .stat-card { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 8px; text-align: center; }
-    .stat-val { font-size: 1.5rem; font-weight: 700; }
-    .stat-lbl { font-size: 0.75rem; color: var(--muted); }
-    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
-    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-    th { background-color: #111827; color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
-    .badge { padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    label { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+
+    select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      min-width: 180px;
+    }
+
+    .user-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .user-pill {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .user-pill.active {
+      background: rgba(37, 99, 235, 0.2);
+      border-color: var(--primary);
+      color: #60a5fa;
+    }
+
+    .user-pill.disabled {
+      opacity: 0.4;
+      text-decoration: line-through;
+    }
+
+    .btn-sm {
+      background: var(--border);
+      color: var(--text);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    /* Table Formatting */
+    .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+
+    table { width: 100%; border-collapse: collapse; background: var(--card); text-align: left; }
+
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+
+    th { background: #111827; color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      display: inline-block;
+    }
+
     .badge-met { background: rgba(22, 163, 74, 0.2); color: #4ade80; border: 1px solid var(--success); }
     .badge-unmet { background: rgba(217, 119, 6, 0.2); color: #fbbf24; border: 1px solid var(--warning); }
+    .badge-out { background: rgba(220, 38, 38, 0.2); color: #f87171; border: 1px solid var(--danger); }
   </style>
 </head>
 <body>
 
   <div class="header">
     <div>
-      <h2>Coach Participation Review</h2>
-      <small id="lastUpdated" style="color: var(--muted);">Loading data...</small>
+      <h2>Coach Multi-Plotter Review</h2>
+      <small id="lastUpdated" style="color: var(--muted);">Loading game logs...</small>
     </div>
-    <button class="btn-refresh" onclick="fetchReviewData()">🔄 Refresh</button>
+    <button class="btn-sm" onclick="fetchLogData()">🔄 Refresh Data</button>
   </div>
 
-  <div class="stats-summary">
-    <div class="stat-card">
-      <div class="stat-val" id="metCount">0</div>
-      <div class="stat-lbl">Requirements Met (10+)</div>
+  <div class="controls-panel">
+    <div class="control-group">
+      <label for="gameSelect">Select Game:</label>
+      <select id="gameSelect" onchange="render()"></select>
     </div>
-    <div class="stat-card">
-      <div class="stat-val" id="unmetCount">0</div>
-      <div class="stat-lbl">Needs Snaps (&lt;10)</div>
+    <div class="control-group">
+      <label>Active Plotters (Click to toggle/hide user):</label>
+      <div class="user-pills" id="userPills"></div>
     </div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Player</th>
-        <th>Snaps</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="rosterTable">
-      <tr><td colspan="3">Fetching live data...</td></tr>
-    </tbody>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead id="tableHeader">
+        <tr>
+          <th>Player</th>
+          <th>Max Snaps</th>
+          <th>Requirement</th>
+        </tr>
+      </thead>
+      <tbody id="rosterTable">
+        <tr><td colspan="3">Select a game to view stats.</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
 
-    async function fetchReviewData() {
-      document.getElementById("lastUpdated").innerText = "Refreshing...";
+    const roster = [
+      "#1 Sam James", "#2 Mikai Rios", "#3 Chase Daniel", "#4 Riley Lesperance",
+      "#5 August Mandulak", "#6 Will Parker", "#8 Thoreson Edwards", "#9 Conan Iakopo",
+      "#11 Jaren Taitano", "#13 Toby Fejaran", "#14 Jibreel Gonzalez", "#15 Cruz Nichols",
+      "#18 Samuel Thomas", "#23 Donovan Schade-Graeber", "#25 Gavin Kortyka",
+      "#32 Darian Gonzalez Montez", "#33 Jacob Rule", "#40 Jason McIntosh-Barela",
+      "#42 Julian Avila", "#44 Alonzo Gray", "#45 Colt Kragerud", "#50 Daniel Moreno Olivares",
+      "#54 Brayden Steinmetz", "#61 Roman Parker-McKenna", "#63 Cayden Lemay",
+      "#66 Alvaro Gonzalez-Alcala", "#72 Huck Holscher", "#77 Calvin Brennan",
+      "#80 Kaine Chacon", "#82 Preston Zucco", "#92 Forest Jolliffe", "#99 Hayden Santangelo"
+    ];
+
+    let rawLogEntries = [];
+    let availableGames = [];
+    let activeUsers = new Set();
+    let userStates = {}; // username: boolean (enabled)
+
+    async function fetchLogData() {
+      document.getElementById("lastUpdated").innerText = "Fetching live entries...";
       try {
         const response = await fetch(SCRIPT_URL);
         const data = await response.json();
@@ -78,44 +188,146 @@
           return;
         }
 
+        rawLogEntries = data.logEntries || [];
+        availableGames = data.games || [];
+
         document.getElementById("lastUpdated").innerText = "Updated: " + data.lastUpdated;
-        render(data.roster || []);
+        
+        populateGameSelect();
+        render();
       } catch (err) {
-        document.getElementById("lastUpdated").innerText = "Error loading data.";
+        document.getElementById("lastUpdated").innerText = "Error loading logs.";
         console.error(err);
       }
     }
 
-    function render(roster) {
-      let met = 0;
-      let unmet = 0;
+    function populateGameSelect() {
+      const select = document.getElementById("gameSelect");
+      select.innerHTML = "";
+
+      if (availableGames.length === 0) {
+        select.innerHTML = "<option>No games recorded</option>";
+        return;
+      }
+
+      availableGames.forEach((game, idx) => {
+        const opt = document.createElement("option");
+        opt.value = game;
+        opt.innerText = game;
+        if (idx === availableGames.length - 1) opt.selected = true; // Default to latest game
+        select.appendChild(opt);
+      });
+    }
+
+    function toggleUser(username) {
+      userStates[username] = !userStates[username];
+      renderUserPills();
+      render();
+    }
+
+    function renderUserPills() {
+      const container = document.getElementById("userPills");
+      container.innerHTML = "";
+
+      Object.keys(userStates).forEach(user => {
+        const isEnabled = userStates[user];
+        const pill = document.createElement("div");
+        pill.className = `user-pill ${isEnabled ? 'active' : 'disabled'}`;
+        pill.onclick = () => toggleUser(user);
+        pill.innerHTML = `${isEnabled ? '✓' : '✗'} ${user}`;
+        container.appendChild(pill);
+      });
+    }
+
+    function render() {
+      const selectedGame = document.getElementById("gameSelect").value;
+      if (!selectedGame) return;
+
+      // Filter entries by game
+      const gameEntries = rawLogEntries.filter(e => e.game === selectedGame);
+
+      // Detect all unique plotters for this game
+      const gamePlotters = Array.from(new Set(gameEntries.map(e => e.user).filter(Boolean)));
+      
+      // Update state for any newly discovered users
+      gamePlotters.forEach(u => {
+        if (userStates[u] === undefined) userStates[u] = true;
+      });
+
+      renderUserPills();
+
+      const enabledPlotters = gamePlotters.filter(u => userStates[u]);
+
+      // Calculate totals per player per plotter
+      const userPlayerCounts = {};
+      const playerDisabledStatus = {};
+
+      enabledPlotters.forEach(u => { userPlayerCounts[u] = {}; });
+
+      gameEntries.forEach(entry => {
+        const u = entry.user;
+        if (!userStates[u]) return; // Skip disabled users
+
+        if (entry.type === "PLAY" && entry.activePlayers) {
+          entry.activePlayers.forEach(p => {
+            userPlayerCounts[u][p] = (userPlayerCounts[u][p] || 0) + 1;
+          });
+        } else if (entry.type === "MANUAL_ADJUSTMENT" && entry.targetPlayer) {
+          if (entry.newValue !== undefined) {
+            userPlayerCounts[u][entry.targetPlayer] = entry.newValue;
+          }
+        } else if (entry.type === "PLAYER_DISABLED" && entry.targetPlayer) {
+          playerDisabledStatus[entry.targetPlayer] = true;
+        }
+      });
+
+      // Build Table Header
+      const headerRow = document.getElementById("tableHeader");
+      let headerHTML = `<tr><th>Player</th>`;
+      enabledPlotters.forEach(u => {
+        headerHTML += `<th>${u}</th>`;
+      });
+      headerHTML += `<th>Max Snaps</th><th>Requirement</th></tr>`;
+      headerRow.innerHTML = headerHTML;
+
+      // Build Table Body
       const tbody = document.getElementById("rosterTable");
       tbody.innerHTML = "";
 
-      roster.forEach(player => {
-        const isMet = player.totalSnaps >= 10;
-        if (player.status !== "OUT / Disabled") {
-          if (isMet) met++; else unmet++;
+      roster.forEach(name => {
+        let maxSnaps = 0;
+        let countsHTML = "";
+
+        enabledPlotters.forEach(u => {
+          const count = userPlayerCounts[u][name] || 0;
+          if (count > maxSnaps) maxSnaps = count;
+          countsHTML += `<td>${count}</td>`;
+        });
+
+        const isOut = playerDisabledStatus[name];
+        const isMet = maxSnaps >= 10;
+
+        let statusBadge = "";
+        if (isOut) {
+          statusBadge = `<span class="badge badge-out">OUT</span>`;
+        } else if (isMet) {
+          statusBadge = `<span class="badge badge-met">✓ Met (10+)</span>`;
+        } else {
+          statusBadge = `<span class="badge badge-unmet">Needs ${10 - maxSnaps} more</span>`;
         }
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td><strong>${player.name}</strong></td>
-          <td>${player.totalSnaps}</td>
-          <td>
-            <span class="badge ${isMet ? 'badge-met' : 'badge-unmet'}">
-              ${isMet ? 'Met (' + player.qtrMet + ')' : 'Needs ' + (10 - player.totalSnaps) + ' more'}
-            </span>
-          </td>
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${name}</strong></td>
+          ${countsHTML}
+          <td><strong>${maxSnaps}</strong></td>
+          <td>${statusBadge}</td>
         `;
-        tbody.appendChild(row);
+        tbody.appendChild(tr);
       });
-
-      document.getElementById("metCount").innerText = met;
-      document.getElementById("unmetCount").innerText = unmet;
     }
 
-    fetchReviewData();
+    fetchLogData();
   </script>
 </body>
 </html>
