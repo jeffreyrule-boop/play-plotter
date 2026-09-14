@@ -2,39 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Liberty Falcons Play Plotter</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; padding: 0; background: #f0f2f5; color: #1c1e21; padding-bottom: 40px; }
-    .header { position: sticky; top: 0; background: #1a365d; color: white; padding: 12px 16px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-    .title { font-size: 18px; font-weight: bold; }
-    .sub-title { font-size: 13px; color: #cbd5e0; margin-top: 2px; }
-    .qtr-selector { display: flex; gap: 6px; margin-top: 10px; }
-    .qtr-btn { flex: 1; padding: 6px; background: #2d3748; color: white; border: 1px solid #4a5568; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; }
+    body { margin: 0; padding: 0; background: #f0f2f5; color: #1c1e21; padding-bottom: 20px; }
+    
+    .header { position: sticky; top: 0; background: #1a365d; color: white; padding: 8px 12px; z-index: 100; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .title { font-size: 16px; font-weight: bold; }
+    .sub-title { font-size: 12px; color: #cbd5e0; }
+    
+    .qtr-selector { display: flex; gap: 4px; margin-top: 6px; }
+    .qtr-btn { flex: 1; padding: 4px; background: #2d3748; color: white; border: 1px solid #4a5568; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; }
     .qtr-btn.active { background: #3182ce; border-color: #63b3ed; }
-    .sticky-actions { position: sticky; top: 96px; background: #edf2f7; padding: 10px 16px; z-index: 99; border-bottom: 1px solid #e2e8f0; display: flex; gap: 8px; }
-    .btn-lock { flex: 2; padding: 14px; background: #2b6cb0; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-align: center; }
-    .btn-lock:active { background: #2c5282; }
-    .btn-sync { flex: 1; padding: 14px; background: #2f855a; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-align: center; }
-    .btn-reset { padding: 14px; background: #e53e3e; color: white; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
-    .player-list { padding: 12px 16px; }
-    .player-card { display: flex; align-items: center; justify-content: space-between; background: white; padding: 12px 14px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e8f0; user-select: none; }
-    .player-card.selected { border-left: 6px solid #3182ce; }
-    .player-card.met { background: #c6f6d5; border-color: #9ae6b4; }
-    .player-card.met.selected { border-left: 6px solid #276749; }
-    .player-name { font-weight: bold; font-size: 15px; }
-    .player-stats { font-size: 12px; color: #4a5568; margin-top: 2px; }
-    .badge-met { background: #276749; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 6px; }
-    .checkbox-custom { width: 28px; height: 28px; border-radius: 6px; border: 2px solid #cbd5e0; display: flex; align-items: center; justify-content: center; background: white; font-weight: bold; color: white; }
-    .player-card.selected .checkbox-custom { background: #3182ce; border-color: #3182ce; }
-    .player-card.selected .checkbox-custom::after { content: "✓"; font-size: 18px; }
+
+    .sticky-actions { position: sticky; top: 76px; background: #edf2f7; padding: 6px 12px; z-index: 99; border-bottom: 1px solid #cbd5e0; display: flex; gap: 6px; }
+    .btn-lock { flex: 2; padding: 10px; background: #2b6cb0; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
+    .btn-sync { flex: 1; padding: 10px; background: #2f855a; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-reset { padding: 10px 12px; background: #e53e3e; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+
+    /* 2-Column Grid Layout for Compact Sideline View */
+    .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 8px 12px; }
+    .player-chip { display: flex; align-items: center; justify-content: space-between; background: white; padding: 6px 8px; border-radius: 6px; border: 1.5px solid #cbd5e0; font-size: 12px; font-weight: bold; user-select: none; cursor: pointer; min-height: 38px; }
+    .player-chip.selected { background: #ebf8ff; border-color: #3182ce; color: #2b6cb0; box-shadow: inset 0 0 0 1px #3182ce; }
+    .player-chip.met { background: #f0fff4; border-color: #38a169; }
+    .player-chip.met.selected { background: #c6f6d5; border-color: #276749; color: #22543d; }
+    
+    .chip-info { display: flex; flex-direction: column; overflow: hidden; }
+    .chip-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+    .chip-badge { font-size: 10px; font-weight: normal; color: #718096; margin-top: 1px; }
+    .player-chip.selected .chip-badge { color: #2b6cb0; }
+    .player-chip.met .chip-badge { color: #276749; font-weight: bold; }
+    
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #cbd5e0; flex-shrink: 0; }
+    .player-chip.selected .status-dot { background: #3182ce; border-color: #2b6cb0; }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <div>
+    <div class="header-top">
       <div class="title">Liberty Falcons Plotter</div>
       <div class="sub-title" id="playCountHeader">Play #1 • On Field: 0 / 11</div>
     </div>
@@ -48,11 +56,11 @@
 
   <div class="sticky-actions">
     <button class="btn-lock" onclick="lockInPlay()">LOCK IN PLAY <span id="btnPlayNum">1</span></button>
-    <button class="btn-sync" onclick="syncToGoogleSheet()">Sync Sheet</button>
+    <button class="btn-sync" onclick="syncToGoogleSheet()">Sync</button>
     <button class="btn-reset" onclick="resetGame()">Reset</button>
   </div>
 
-  <div class="player-list" id="playerList"></div>
+  <div class="player-grid" id="playerGrid"></div>
 
   <script>
     const roster = [
@@ -75,15 +83,8 @@
 
     const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
 
-    // --- LOCAL STORAGE LOGIC ---
     function saveToLocalStorage() {
-      const data = {
-        currentQtr: currentQtr,
-        playNumber: playNumber,
-        activePlayers: Array.from(activePlayers),
-        playHistory: playHistory,
-        playerStats: playerStats
-      };
+      const data = { currentQtr, playNumber, activePlayers: Array.from(activePlayers), playHistory, playerStats };
       localStorage.setItem("falcons_play_plotter_data", JSON.stringify(data));
     }
 
@@ -98,26 +99,23 @@
           playHistory = parsed.playHistory || [];
           playerStats = parsed.playerStats || playerStats;
           
-          // Sync UI quarter buttons
           document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
             btn.classList.toggle("active", idx + 1 === currentQtr);
           });
-        } catch (e) {
-          console.error("Error loading local storage", e);
-        }
+        } catch (e) { console.error(e); }
       }
     }
 
     function resetGame() {
-      if (confirm("Are you sure you want to reset the current game data? This cannot be undone.")) {
+      if (confirm("Reset current game data?")) {
         localStorage.removeItem("falcons_play_plotter_data");
         location.reload();
       }
     }
 
     function render() {
-      const listEl = document.getElementById("playerList");
-      listEl.innerHTML = "";
+      const gridEl = document.getElementById("playerGrid");
+      gridEl.innerHTML = "";
       document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${activePlayers.size} / 11`;
       document.getElementById("btnPlayNum").innerText = playNumber;
 
@@ -126,18 +124,18 @@
         const isSelected = activePlayers.has(name);
         const isMet = stats.total >= 10;
 
-        const card = document.createElement("div");
-        card.className = `player-card ${isSelected ? 'selected' : ''} ${isMet ? 'met' : ''}`;
-        card.onclick = () => togglePlayer(name);
+        const chip = document.createElement("div");
+        chip.className = `player-chip ${isSelected ? 'selected' : ''} ${isMet ? 'met' : ''}`;
+        chip.onclick = () => togglePlayer(name);
 
-        card.innerHTML = `
-          <div>
-            <div class="player-name">${name} ${isMet ? `<span class="badge-met">Met (${stats.qtrMet})</span>` : ''}</div>
-            <div class="player-stats">Total Plays: ${stats.total}</div>
+        chip.innerHTML = `
+          <div class="chip-info">
+            <span class="chip-name">${name}</span>
+            <span class="chip-badge">${isMet ? `Met (${stats.qtrMet})` : `Plays: ${stats.total}`}</span>
           </div>
-          <div class="checkbox-custom"></div>
+          <div class="status-dot"></div>
         `;
-        listEl.appendChild(card);
+        gridEl.appendChild(chip);
       });
     }
 
@@ -173,7 +171,7 @@
 
     async function syncToGoogleSheet() {
       if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-        alert("Please paste your Google Apps Script Web App URL into the SCRIPT_URL variable.");
+        alert("Paste your Google Apps Script Web App URL into line 103 (SCRIPT_URL).");
         return;
       }
       try {
@@ -189,7 +187,6 @@
       }
     }
 
-    // Initialize application state
     loadFromLocalStorage();
     render();
   </script>
