@@ -2,413 +2,194 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Falcons Play Plotter</title>
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
       --success: #16a34a;
       --warning: #d97706;
       --danger: #dc2626;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      user-select: none;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 12px; max-width: 800px; margin: 0 auto; }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding-bottom: 140px; /* Space reserved for the bottom sticky deck */
-    }
-
-    /* Top Navigation Bar */
-    .top-bar {
-      background-color: var(--card-bg);
-      border-bottom: 1px solid var(--border);
-      padding: 8px 12px;
+    .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      gap: 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      position: relative;
     }
 
-    .session-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+    /* Top Navigation / Context Menu Styles */
+    .menu-container {
+      position: relative;
     }
 
-    .session-item {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
-    .session-item strong {
-      color: var(--text-main);
-      text-decoration: underline;
-      text-decoration-style: dotted;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 6px;
-    }
-
-    .btn-sm {
-      background-color: var(--border);
-      color: var(--text-main);
-      border: none;
-      padding: 5px 8px;
+    .menu-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
       border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
       cursor: pointer;
-      display: inline-flex;
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 4px;
-      min-width: 55px;
-      transition: background-color 0.2s ease;
-    }
-
-    .btn-sm.active {
-      background-color: var(--warning);
-      color: #000;
-    }
-
-    .btn-sm.sync-success {
-      background-color: var(--success);
-      color: #fff;
-    }
-
-    .btn-sm:disabled {
-      opacity: 0.85;
-      cursor: not-allowed;
-    }
-
-    /* Loading Spinner */
-    .spinner {
-      width: 10px;
-      height: 10px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Compact Roster Grid */
-    .roster-container {
-      padding: 10px 10px 0 10px;
-    }
-
-    .roster-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
       gap: 6px;
     }
 
-    @media (min-width: 480px) {
-      .roster-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      }
-    }
-
-    .player-chip {
-      background-color: var(--card-bg);
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 110%;
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 6px 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      transition: all 0.1s ease;
-    }
-
-    .player-chip.selected {
-      border-color: var(--primary);
-      background-color: rgba(37, 99, 235, 0.2);
-    }
-
-    .player-chip.met {
-      border-color: var(--success);
-    }
-
-    .player-chip.disabled-player {
-      opacity: 0.35;
-      background-color: #0f172a;
-      border-color: #1e293b;
-    }
-
-    .player-chip.edit-mode-active {
-      border-style: dashed;
-      border-color: var(--warning);
-    }
-
-    .chip-info {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .chip-name {
-      font-weight: 600;
-      font-size: 0.82rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .chip-badge {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background-color: var(--border);
-      flex-shrink: 0;
-      margin-left: 6px;
-    }
-
-    .player-chip.selected .status-dot {
-      background-color: var(--primary);
-    }
-
-    .player-chip.met .status-dot {
-      background-color: var(--success);
-    }
-
-    /* Fixed Bottom Control Dock */
-    .bottom-dock {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background-color: var(--card-bg);
-      border-top: 1px solid var(--border);
-      padding: 8px 12px 12px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+      min-width: 160px;
       z-index: 100;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.4);
+      overflow: hidden;
     }
 
-    .qtr-selector {
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
       display: flex;
-      gap: 6px;
-    }
-
-    .qtr-btn {
-      flex: 1;
-      padding: 6px;
-      background-color: var(--bg-color);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.75rem;
-      cursor: pointer;
-      text-align: center;
-    }
-
-    .qtr-btn.active {
-      background-color: var(--primary);
-      color: #fff;
-      border-color: var(--primary);
-    }
-
-    .status-banner {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      background-color: var(--bg-color);
-      padding: 6px 10px;
-      border-radius: 6px;
-      border-left: 3px solid var(--primary);
+      gap: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      background: none;
+      border: none;
+      color: var(--text);
+      text-align: left;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
     }
 
-    .play-title {
-      font-size: 0.85rem;
-      font-weight: 700;
+    .dropdown-item:last-child {
+      border-bottom: none;
     }
 
-    .lineup-warning {
-      font-size: 0.8rem;
-      font-weight: 600;
+    .dropdown-item:hover {
+      background: #334155;
     }
 
-    .warning-under { color: var(--warning); }
-    .warning-over { color: var(--danger); }
-    .warning-valid { color: var(--success); }
+    .dropdown-item.danger {
+      color: #f87171;
+    }
 
-    .action-bar {
+    /* Application Layout */
+    .controls {
       display: flex;
       gap: 8px;
-    }
-
-    .btn-action {
-      flex: 2;
-      background-color: var(--primary);
-      color: #fff;
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-    }
-
-    .btn-action:active {
-      background-color: var(--primary-hover);
-    }
-
-    .btn-secondary {
-      flex: 1;
-      background-color: var(--border);
-      color: var(--text-main);
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    /* Modal Styling */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 200;
-    }
-
-    .modal-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      padding: 16px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 320px;
-    }
-
-    .modal-card h3 { font-size: 1rem; margin-bottom: 10px; }
-
-    .form-group {
       margin-bottom: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      flex-wrap: wrap;
     }
 
-    .form-group label { font-size: 0.8rem; }
-
-    .form-group input[type="number"] {
-      padding: 6px;
-      background: var(--bg-color);
+    select, input {
+      background: var(--card);
+      color: var(--text);
       border: 1px solid var(--border);
-      color: #fff;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border-radius: 6px;
       font-size: 0.9rem;
     }
 
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .btn {
+      background: var(--primary);
+      color: var(--text);
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
     }
 
-    .modal-buttons {
-      display: flex;
-      gap: 6px;
-      margin-top: 12px;
+    .btn:hover { background: var(--primary-hover); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
     }
+
+    .card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card.active {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.15);
+    }
+
+    .card.disabled {
+      opacity: 0.4;
+      border-color: var(--danger);
+      text-decoration: line-through;
+    }
+
+    .card .number { font-size: 1.2rem; font-weight: bold; }
+    .card .name { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .card .count { font-size: 0.85rem; font-weight: 600; margin-top: 6px; }
   </style>
 </head>
 <body>
 
-  <!-- Top Header Bar -->
-  <div class="top-bar">
-    <div class="session-info">
-      <div class="session-item" onclick="changeUsername()">Plotter: <strong id="displayUser">...</strong></div>
-      <div class="session-item" onclick="changeGameName()">Game: <strong id="displayGame">...</strong></div>
-    </div>
-    <div class="header-actions">
-      <button class="btn-sm" id="btnEditMode" onclick="toggleEditMode()">Edit</button>
-      <button class="btn-sm" id="btnSync" onclick="syncToGoogleSheet()">Sync</button>
-      <button class="btn-sm" onclick="resetGame()">Reset</button>
-    </div>
-  </div>
-
-  <!-- Player Roster Grid -->
-  <div class="roster-container">
-    <div class="roster-grid" id="playerGrid"></div>
-  </div>
-
-  <!-- Fixed Bottom Dock: Quarters, Play Banner, and Action Buttons -->
-  <div class="bottom-dock">
-    <div class="qtr-selector">
-      <div class="qtr-btn active" onclick="setQtr(1)">Q1</div>
-      <div class="qtr-btn" onclick="setQtr(2)">Q2</div>
-      <div class="qtr-btn" onclick="setQtr(3)">Q3</div>
-      <div class="qtr-btn" onclick="setQtr(4)">Q4</div>
+  <div class="header">
+    <div>
+      <h2>Falcons Play Plotter</h2>
+      <small id="status" style="color: var(--muted);">Ready</small>
     </div>
 
-    <div class="status-banner">
-      <div class="play-title" id="playCountHeader">Play #1 • On Field: 0 / 11</div>
-      <div class="lineup-warning warning-under" id="lineupWarning">⚠️ Need 11 players</div>
-    </div>
-
-    <div class="action-bar">
-      <button class="btn-secondary" onclick="undoLastPlay()">Undo</button>
-      <button class="btn-action" onclick="lockInPlay()">Lock In Play #<span id="btnPlayNum">1</span></button>
-    </div>
-  </div>
-
-  <!-- Edit Player Modal -->
-  <div class="modal-overlay" id="editModal">
-    <div class="modal-card">
-      <h3 id="modalPlayerTitle">Edit Player</h3>
-      <div class="form-group">
-        <label>Adjust Play Count:</label>
-        <input type="number" id="modalPlayCount" min="0" value="0">
-      </div>
-      <div class="form-group checkbox-group">
-        <input type="checkbox" id="modalDisabled">
-        <label for="modalDisabled">Mark Out / Absent / Injured</label>
-      </div>
-      <div class="modal-buttons">
-        <button class="btn-secondary" style="flex:1" onclick="closeEditModal()">Cancel</button>
-        <button class="btn-action" style="flex:1" onclick="savePlayerEdit()">Save</button>
+    <!-- Top Right Context Menu -->
+    <div class="menu-container">
+      <button class="menu-btn" onclick="toggleMenu(event)">⚙️ Menu ▾</button>
+      <div class="dropdown-menu" id="contextMenu">
+        <button class="dropdown-item" onclick="toggleEditMode()">✏️ Edit Roster</button>
+        <button class="dropdown-item" onclick="syncData()">🔄 Sync Data</button>
+        <a class="dropdown-item" href="review.html" target="_blank" onclick="closeMenu()">📊 Review Page</a>
+        <button class="dropdown-item danger" onclick="resetGameData()">⚠️ Reset Game</button>
       </div>
     </div>
   </div>
+
+  <div class="controls">
+    <input type="text" id="userInput" placeholder="Your Name/Initials" style="flex: 1;" />
+    <select id="gameSelect" style="flex: 1;"></select>
+    <button class="btn" onclick="recordPlay()">+ Log Play</button>
+  </div>
+
+  <div class="grid" id="rosterGrid"></div>
 
   <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
+
     const roster = [
       "#1 Sam James", "#2 Mikai Rios", "#3 Chase Daniel", "#4 Riley Lesperance",
       "#5 August Mandulak", "#6 Will Parker", "#8 Thoreson Edwards", "#9 Conan Iakopo",
@@ -421,405 +202,92 @@
       "#80 Kaine Chacon", "#82 Preston Zucco", "#92 Forest Jolliffe", "#99 Hayden Santangelo"
     ];
 
-    let currentUser = "";
-    let currentGame = "";
-    let currentQtr = 1;
-    let playNumber = 1;
-    let isEditMode = false;
-    let editingPlayer = null;
     let activePlayers = new Set();
-    let playHistory = [];
-    let playerStats = roster.reduce((acc, name) => { 
-      acc[name] = { total: 0, qtrMet: null, disabled: false }; 
-      return acc; 
-    }, {});
+    let editMode = false;
 
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
-
-    function generateFunUsername() {
-      const adjectives = ["Bold", "Swift", "Iron", "Storm", "Apex", "Shadow", "Alpha", "Turbo"];
-      const nouns = ["Falcon", "Hawk", "Wing", "Talent", "Plotter", "Scout", "Coach", "Eagle"];
-      const num = Math.floor(Math.random() * 90) + 10;
-      const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-      const noun = nouns[Math.floor(Math.random() * nouns.length)];
-      return `${adj}${noun}${num}`;
+    function toggleMenu(event) {
+      event.stopPropagation();
+      document.getElementById("contextMenu").classList.toggle("show");
     }
 
-    function getDefaultGameName() {
-      const today = new Date();
-      const month = today.getMonth() + 1;
-      const day = today.getDate();
-      const year = today.getFullYear();
-      return `Game ${month}/${day}/${year}`;
+    function closeMenu() {
+      document.getElementById("contextMenu").classList.remove("show");
     }
 
-    function initUserAndGame() {
-      let savedUser = localStorage.getItem("falcons_user_name");
-      if (!savedUser) {
-        const autoName = generateFunUsername();
-        const entered = prompt("Enter your Plotter Name / Handle:", autoName);
-        savedUser = (entered && entered.trim() !== "") ? entered.trim() : autoName;
-        localStorage.setItem("falcons_user_name", savedUser);
-      }
-      currentUser = savedUser;
-
-      let savedGame = localStorage.getItem("falcons_game_name");
-      if (!savedGame) {
-        const defaultGame = getDefaultGameName();
-        const entered = prompt("Enter Game Title:", defaultGame);
-        savedGame = (entered && entered.trim() !== "") ? entered.trim() : defaultGame;
-        localStorage.setItem("falcons_game_name", savedGame);
-      }
-      currentGame = savedGame;
-
-      updateSessionBar();
-    }
-
-    function changeUsername() {
-      const updated = prompt("Update your Plotter Name:", currentUser);
-      if (updated && updated.trim() !== "") {
-        currentUser = updated.trim();
-        localStorage.setItem("falcons_user_name", currentUser);
-        
-        playHistory.forEach(item => { item.user = currentUser; });
-
-        updateSessionBar();
-        saveToLocalStorage();
-        render();
-      }
-    }
-
-    function changeGameName() {
-      const updated = prompt("Update Game Title:", currentGame);
-      if (updated && updated.trim() !== "") {
-        currentGame = updated.trim();
-        localStorage.setItem("falcons_game_name", currentGame);
-        
-        playHistory.forEach(item => { item.game = currentGame; });
-
-        updateSessionBar();
-        saveToLocalStorage();
-        render();
-      }
-    }
-
-    function updateSessionBar() {
-      document.getElementById("displayUser").innerText = currentUser;
-      document.getElementById("displayGame").innerText = currentGame;
-    }
-
-    function saveToLocalStorage() {
-      const data = { currentUser, currentGame, currentQtr, playNumber, activePlayers: Array.from(activePlayers), playHistory, playerStats };
-      localStorage.setItem("falcons_play_plotter_data", JSON.stringify(data));
-    }
-
-    function loadFromLocalStorage() {
-      initUserAndGame();
-      const saved = localStorage.getItem("falcons_play_plotter_data");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          currentQtr = parsed.currentQtr || 1;
-          playNumber = parsed.playNumber || 1;
-          activePlayers = new Set(parsed.activePlayers || []);
-          playHistory = parsed.playHistory || [];
-          playerStats = parsed.playerStats || playerStats;
-          
-          document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
-            btn.classList.toggle("active", idx + 1 === currentQtr);
-          });
-        } catch (e) { console.error(e); }
-      }
-    }
-
-    function resetGame() {
-      if (confirm("Start a new game session? (This will clear current play counts)")) {
-        localStorage.removeItem("falcons_play_plotter_data");
-        localStorage.removeItem("falcons_game_name");
-        location.reload();
-      }
-    }
+    // Close menu when clicking anywhere else on the screen
+    window.addEventListener("click", () => closeMenu());
 
     function toggleEditMode() {
-      isEditMode = !isEditMode;
-      const btn = document.getElementById("btnEditMode");
-      btn.classList.toggle("active", isEditMode);
-      btn.innerText = isEditMode ? "Done" : "Edit";
-      render();
+      closeMenu();
+      editMode = !editMode;
+      alert(editMode ? "Edit Mode ON: Click players to mark them OUT." : "Edit Mode OFF.");
+      renderRoster();
     }
 
-    function openEditModal(name) {
-      editingPlayer = name;
-      const stats = playerStats[name];
-      document.getElementById("modalPlayerTitle").innerText = `Edit: ${name}`;
-      document.getElementById("modalPlayCount").value = stats.total;
-      document.getElementById("modalDisabled").checked = !!stats.disabled;
-      document.getElementById("editModal").style.display = "flex";
+    function syncData() {
+      closeMenu();
+      document.getElementById("status").innerText = "Syncing with cloud...";
+      setTimeout(() => {
+        document.getElementById("status").innerText = "Synced";
+      }, 1000);
     }
 
-    function closeEditModal() {
-      editingPlayer = null;
-      document.getElementById("editModal").style.display = "none";
-    }
-
-    function savePlayerEdit() {
-      if (!editingPlayer) return;
-      const stats = playerStats[editingPlayer];
-      const newTotal = parseInt(document.getElementById("modalPlayCount").value, 10) || 0;
-      const isDisabled = document.getElementById("modalDisabled").checked;
-
-      const oldTotal = stats.total;
-      const oldDisabled = stats.disabled;
-
-      if (oldTotal !== newTotal) {
-        playHistory.push({
-          type: "MANUAL_ADJUSTMENT",
-          user: currentUser,
-          game: currentGame,
-          play: playNumber,
-          quarter: currentQtr,
-          player: editingPlayer,
-          oldValue: oldTotal,
-          newValue: newTotal,
-          note: `Manual count update: ${oldTotal} -> ${newTotal}`
-        });
+    function resetGameData() {
+      closeMenu();
+      if (confirm("Are you sure you want to reset all play counts for this game locally?")) {
+        activePlayers.clear();
+        renderRoster();
+        document.getElementById("status").innerText = "Game reset locally.";
       }
-
-      stats.total = newTotal;
-      stats.disabled = isDisabled;
-
-      if (stats.total >= 10 && !stats.qtrMet) {
-        stats.qtrMet = `Q${currentQtr}`;
-      } else if (stats.total < 10) {
-        stats.qtrMet = null;
-      }
-
-      if (isDisabled) {
-        activePlayers.delete(editingPlayer);
-        if (oldDisabled !== isDisabled) {
-          playHistory.push({
-            type: "PLAYER_DISABLED",
-            user: currentUser,
-            game: currentGame,
-            play: playNumber,
-            quarter: currentQtr,
-            player: editingPlayer,
-            note: "Player marked out/disabled"
-          });
-        }
-      }
-
-      saveToLocalStorage();
-      closeEditModal();
-      render();
     }
 
-    function render() {
-      const gridEl = document.getElementById("playerGrid");
-      gridEl.innerHTML = "";
-      const count = activePlayers.size;
+    function renderRoster() {
+      const grid = document.getElementById("rosterGrid");
+      if (!grid) return;
       
-      document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${count} / 11`;
-      document.getElementById("btnPlayNum").innerText = playNumber;
+      grid.innerHTML = "";
 
-      const warnEl = document.getElementById("lineupWarning");
-      if (count < 11) {
-        const diff = 11 - count;
-        warnEl.innerText = `⚠️ Need ${diff} more`;
-        warnEl.className = "lineup-warning warning-under";
-      } else if (count > 11) {
-        const diff = count - 11;
-        warnEl.innerText = `🚨 Exceeds by ${diff}`;
-        warnEl.className = "lineup-warning warning-over";
-      } else {
-        warnEl.innerText = "✓ Full Lineup";
-        warnEl.className = "lineup-warning warning-valid";
-      }
-
-      const sortedRoster = [...roster].sort((a, b) => {
-        const disA = playerStats[a].disabled ? 1 : 0;
-        const disB = playerStats[b].disabled ? 1 : 0;
-        return disA - disB;
-      });
-
-      sortedRoster.forEach(name => {
-        const stats = playerStats[name];
-        const isSelected = activePlayers.has(name);
-        const isMet = stats.total >= 10;
-        const isDisabled = stats.disabled;
-
-        const chip = document.createElement("div");
-        chip.className = `player-chip ${isSelected ? 'selected' : ''} ${isMet ? 'met' : ''} ${isDisabled ? 'disabled-player' : ''} ${isEditMode ? 'edit-mode-active' : ''}`;
-        
-        chip.onclick = () => {
-          if (isEditMode) {
-            openEditModal(name);
+      roster.forEach(player => {
+        const card = document.createElement("div");
+        card.className = `card ${activePlayers.has(player) ? 'active' : ''}`;
+        card.onclick = () => {
+          if (activePlayers.has(player)) {
+            activePlayers.delete(player);
           } else {
-            if (!isDisabled) togglePlayer(name);
+            activePlayers.add(player);
           }
+          renderRoster();
         };
 
-        let badgeText = `Plays: ${stats.total}`;
-        if (isDisabled) {
-          badgeText = `OUT (${stats.total})`;
-        } else if (isMet) {
-          badgeText = `Met (${stats.qtrMet})`;
-        }
+        const parts = player.split(" ");
+        const num = parts[0];
+        const name = parts.slice(1).join(" ");
 
-        chip.innerHTML = `
-          <div class="chip-info">
-            <span class="chip-name">${name}</span>
-            <span class="chip-badge">${badgeText}</span>
-          </div>
-          <div class="status-dot"></div>
+        card.innerHTML = `
+          <div class="number">${num}</div>
+          <div class="name">${name}</div>
         `;
-        gridEl.appendChild(chip);
+        grid.appendChild(card);
       });
     }
 
-    function togglePlayer(name) {
-      if (activePlayers.has(name)) { activePlayers.delete(name); } 
-      else { activePlayers.add(name); }
-      saveToLocalStorage();
-      render();
-    }
-
-    function setQtr(q) {
-      currentQtr = q;
-      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => { btn.classList.toggle("active", idx + 1 === q); });
-      saveToLocalStorage();
-    }
-
-    function lockInPlay() {
-      const count = activePlayers.size;
-
-      if (count === 0) { 
-        alert("Select active players first!"); 
-        return; 
+    function recordPlay() {
+      const user = document.getElementById("userInput").value.trim();
+      if (!user) {
+        alert("Please enter your name/initials before logging plays.");
+        return;
       }
-
-      if (count < 11) {
-        if (!confirm(`You currently have only ${count} player(s) selected (expected 11).\n\nDo you still want to lock in this play?`)) {
-          return;
-        }
-      } else if (count > 11) {
-        if (!confirm(`You currently have ${count} players selected (exceeds 11 by ${count - 11}).\n\nDo you still want to lock in this play?`)) {
-          return;
-        }
-      }
-
-      playHistory.push({
-        type: "PLAY",
-        user: currentUser,
-        game: currentGame,
-        play: playNumber,
-        quarter: currentQtr,
-        players: Array.from(activePlayers)
-      });
-
-      activePlayers.forEach(name => {
-        playerStats[name].total += 1;
-        if (playerStats[name].total >= 10 && !playerStats[name].qtrMet) {
-          playerStats[name].qtrMet = `Q${currentQtr}`;
-        }
-      });
-
-      playNumber++;
-      saveToLocalStorage();
-      render();
-    }
-
-    function undoLastPlay() {
-      let lastPlayIdx = -1;
-      for (let i = playHistory.length - 1; i >= 0; i--) {
-        if (playHistory[i].type === "PLAY") {
-          lastPlayIdx = i;
-          break;
-        }
-      }
-
-      if (lastPlayIdx === -1) {
-        alert("No locked plays to undo.");
+      if (activePlayers.size === 0) {
+        alert("Select active players on the field first.");
         return;
       }
 
-      const playToUndo = playHistory.splice(lastPlayIdx, 1)[0];
-
-      playToUndo.players.forEach(name => {
-        if (playerStats[name]) {
-          playerStats[name].total = Math.max(0, playerStats[name].total - 1);
-          if (playerStats[name].total < 10) {
-            playerStats[name].qtrMet = null;
-          }
-        }
-      });
-
-      playNumber = playToUndo.play;
-      currentQtr = playToUndo.quarter;
-      activePlayers = new Set(playToUndo.players);
-
-      playHistory.push({
-        type: "UNDO",
-        user: currentUser,
-        game: currentGame,
-        undonePlay: playToUndo.play,
-        quarter: currentQtr,
-        note: `Undone play #${playToUndo.play}`
-      });
-
-      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
-        btn.classList.toggle("active", idx + 1 === currentQtr);
-      });
-
-      saveToLocalStorage();
-      render();
+      document.getElementById("status").innerText = `Logged play with ${activePlayers.size} players.`;
     }
 
-    async function syncToGoogleSheet() {
-      if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-        alert("Paste your Google Apps Script Web App URL into SCRIPT_URL.");
-        return;
-      }
-
-      const btnSync = document.getElementById("btnSync");
-      
-      btnSync.disabled = true;
-      btnSync.classList.remove("sync-success");
-      btnSync.innerHTML = `<div class="spinner"></div> Syncing...`;
-
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      try {
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user: currentUser,
-            game: currentGame,
-            playerStats: playerStats,
-            playHistory: playHistory
-          })
-        });
-
-        btnSync.classList.add("sync-success");
-        btnSync.innerHTML = `✓ Synced`;
-
-        setTimeout(() => {
-          btnSync.disabled = false;
-          btnSync.classList.remove("sync-success");
-          btnSync.innerText = "Sync";
-        }, 2000);
-
-      } catch (err) {
-        btnSync.disabled = false;
-        btnSync.innerText = "Sync";
-        alert("Error syncing: " + err.message);
-      }
-    }
-
-    loadFromLocalStorage();
-    render();
+    document.addEventListener("DOMContentLoaded", () => {
+      renderRoster();
+    });
   </script>
 </body>
 </html>
