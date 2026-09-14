@@ -19,10 +19,11 @@
 
     .sticky-actions { position: sticky; top: 76px; background: #edf2f7; padding: 6px 12px; z-index: 99; border-bottom: 1px solid #cbd5e0; display: flex; gap: 4px; flex-wrap: wrap; }
     .btn-lock { flex: 2; padding: 10px; background: #2b6cb0; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
+    .btn-undo { padding: 10px 10px; background: #c53030; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
     .btn-sync { flex: 1; padding: 10px; background: #2f855a; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
     .btn-edit-mode { flex: 1; padding: 10px; background: #d69e2e; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
     .btn-edit-mode.active { background: #dd6b20; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #dd6b20; }
-    .btn-reset { padding: 10px 8px; background: #e53e3e; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-reset { padding: 10px 8px; background: #718096; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
 
     .player-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 8px 12px; }
     .player-chip { display: flex; align-items: center; justify-content: space-between; background: white; padding: 6px 8px; border-radius: 6px; border: 1.5px solid #cbd5e0; font-size: 12px; font-weight: bold; user-select: none; cursor: pointer; min-height: 38px; }
@@ -42,7 +43,7 @@
     .status-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #cbd5e0; flex-shrink: 0; }
     .player-chip.selected .status-dot { background: #3182ce; border-color: #2b6cb0; }
 
-    /* Edit Dialog Modal Styles */
+    /* Modal Styles */
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; }
     .modal-content { background: white; padding: 18px; border-radius: 8px; width: 85%; max-width: 340px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
     .modal-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; }
@@ -71,6 +72,7 @@
 
   <div class="sticky-actions">
     <button class="btn-lock" id="btnLock" onclick="lockInPlay()">LOCK IN PLAY <span id="btnPlayNum">1</span></button>
+    <button class="btn-undo" onclick="undoLastPlay()">Undo Play</button>
     <button class="btn-sync" onclick="syncToGoogleSheet()">Sync</button>
     <button class="btn-edit-mode" id="btnEditMode" onclick="toggleEditMode()">Edit Mode</button>
     <button class="btn-reset" onclick="resetGame()">Reset</button>
@@ -301,6 +303,56 @@
       });
 
       playNumber++;
+      saveToLocalStorage();
+      render();
+    }
+
+    function undoLastPlay() {
+      // Find the last logged play in history
+      let lastPlayIdx = -1;
+      for (let i = playHistory.length - 1; i >= 0; i--) {
+        if (playHistory[i].type === "PLAY") {
+          lastPlayIdx = i;
+          break;
+        }
+      }
+
+      if (lastPlayIdx === -1) {
+        alert("No locked plays to undo.");
+        return;
+      }
+
+      const playToUndo = playHistory.splice(lastPlayIdx, 1)[0];
+
+      // Revert play counts for all players in that play
+      playToUndo.players.forEach(name => {
+        if (playerStats[name]) {
+          playerStats[name].total = Math.max(0, playerStats[name].total - 1);
+          // If total drops below 10, remove Qtr Met badge status
+          if (playerStats[name].total < 10) {
+            playerStats[name].qtrMet = null;
+          }
+        }
+      });
+
+      // Restore play number and active player field selection for quick correction
+      playNumber = playToUndo.play;
+      currentQtr = playToUndo.quarter;
+      activePlayers = new Set(playToUndo.players);
+
+      // Log the undo action in history for audit/syncing
+      playHistory.push({
+        type: "UNDO",
+        undonePlay: playToUndo.play,
+        quarter: currentQtr,
+        note: `Undone play #${playToUndo.play}`
+      });
+
+      // Update Qtr buttons UI
+      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
+        btn.classList.toggle("active", idx + 1 === currentQtr);
+      });
+
       saveToLocalStorage();
       render();
     }
