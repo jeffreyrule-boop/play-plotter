@@ -140,7 +140,7 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-      min-width: 130px;
+      min-width: 140px;
       z-index: 150;
       overflow: hidden;
     }
@@ -481,7 +481,7 @@
     </div>
     
     <div class="header-actions">
-      <!-- Syncing / Status Indicator (Left of Menu) -->
+      <!-- Syncing / Status Indicator -->
       <div class="action-status" id="actionStatus">
         <div class="spinner" id="statusSpinner"></div>
         <span id="statusText">Syncing...</span>
@@ -498,9 +498,10 @@
         <button class="btn-sm" onclick="toggleMenu(event)">Menu ▾</button>
         <div class="dropdown-menu" id="contextMenu">
           <button class="dropdown-item" id="menuEditItem" onclick="handleMenuEdit()">✏️ Edit</button>
+          <button class="dropdown-item" onclick="handleMenuNewGame()">➕ New Game</button>
           <button class="dropdown-item" onclick="handleMenuSync()">🔄 Sync</button>
           <a class="dropdown-item" href="review.html" target="_blank" onclick="closeMenu()">📊 Review</a>
-          <button class="dropdown-item danger" onclick="handleMenuReset()">⚠️ Reset</button>
+          <button class="dropdown-item danger" onclick="handleMenuReset()">⚠️ Reset Session</button>
         </div>
       </div>
     </div>
@@ -654,6 +655,11 @@
       toggleEditMode();
     }
 
+    function handleMenuNewGame() {
+      closeMenu();
+      startNewGame();
+    }
+
     function handleMenuSync() {
       closeMenu();
       syncToGoogleSheet();
@@ -703,6 +709,38 @@
       updateSessionBar();
     }
 
+    function startNewGame() {
+      const defaultGame = getDefaultGameName();
+      const entered = prompt("Enter Title for New Game:", defaultGame);
+      
+      if (entered === null) return; // User canceled prompt
+
+      const newGameTitle = (entered && entered.trim() !== "") ? entered.trim() : defaultGame;
+
+      // Clear current state
+      currentGame = newGameTitle;
+      currentQtr = 1;
+      playNumber = 1;
+      activePlayers.clear();
+      playHistory = [];
+      playerStats = roster.reduce((acc, name) => { 
+        acc[name] = { total: 0, qtrMet: null, disabled: false }; 
+        return acc; 
+      }, {});
+
+      // Persist new game state
+      localStorage.setItem("falcons_game_name", currentGame);
+      saveToLocalStorage();
+
+      // Update UI elements
+      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
+        btn.classList.toggle("active", idx === 0);
+      });
+
+      updateSessionBar();
+      render();
+    }
+
     function changeUsername() {
       const updated = prompt("Update your Plotter Name:", currentUser);
       if (updated && updated.trim() !== "") {
@@ -743,7 +781,7 @@
 
     function loadFromLocalStorage() {
       initUserAndGame();
-      const saved = localStorage.getItem("falcons_play_plotter_data");
+      const saved = localStorage.setItem ? localStorage.getItem("falcons_play_plotter_data") : null;
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -761,7 +799,7 @@
     }
 
     function resetGame() {
-      if (confirm("Start a new game session? (This will clear current play counts)")) {
+      if (confirm("Reset current session data entirely?")) {
         localStorage.removeItem("falcons_play_plotter_data");
         localStorage.removeItem("falcons_game_name");
         location.reload();
