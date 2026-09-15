@@ -228,18 +228,26 @@
 
     .player-chip.met {
       border-color: var(--success);
-      opacity: 0.75;
+      opacity: 0.85;
+    }
+
+    .player-chip.met.selected {
+      border-color: var(--primary);
+      background-color: rgba(37, 99, 235, 0.2);
+      opacity: 1;
     }
 
     .player-chip.disabled-player {
       opacity: 0.35;
       background-color: #0f172a;
       border-color: #1e293b;
+      cursor: not-allowed;
     }
 
     .player-chip.edit-mode-active {
       border-style: dashed;
       border-color: var(--warning);
+      cursor: pointer;
     }
 
     .chip-info {
