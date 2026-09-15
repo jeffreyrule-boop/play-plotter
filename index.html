@@ -228,6 +228,7 @@
 
     .player-chip.met {
       border-color: var(--success);
+      opacity: 0.75;
     }
 
     .player-chip.disabled-player {
@@ -548,7 +549,7 @@
           <ul>
             <li>Select the current quarter (<strong>Q1–Q4</strong>) at the bottom.</li>
             <li>The banner tells you how many players are selected. Target is <strong>11 players</strong>.</li>
-            <li>Once 11 players are highlighted, tap <strong>"Lock In Play"</strong> to credit everyone on field.</li>
+            <li>Tap <strong>"Lock In Play"</strong> to credit everyone on field.</li>
           </ul>
         </div>
 
@@ -781,7 +782,7 @@
 
     function loadFromLocalStorage() {
       initUserAndGame();
-      const saved = localStorage.setItem ? localStorage.getItem("falcons_play_plotter_data") : null;
+      const saved = localStorage.getItem("falcons_play_plotter_data");
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -877,6 +878,13 @@
       render();
     }
 
+    function getPlayerCategoryRank(name) {
+      const stats = playerStats[name];
+      if (stats.disabled) return 2; // Disabled/Out players last
+      if (stats.total >= 10) return 1; // Quota met players middle
+      return 0; // Active needs quota players first
+    }
+
     function render() {
       const gridEl = document.getElementById("playerGrid");
       gridEl.innerHTML = "";
@@ -911,9 +919,17 @@
       }
 
       const sortedRoster = [...roster].sort((a, b) => {
-        const disA = playerStats[a].disabled ? 1 : 0;
-        const disB = playerStats[b].disabled ? 1 : 0;
-        return disA - disB;
+        const rankA = getPlayerCategoryRank(a);
+        const rankB = getPlayerCategoryRank(b);
+
+        if (rankA !== rankB) {
+          return rankA - rankB;
+        }
+
+        // Secondary sort by numerical jersey order within the same status category
+        const numA = parseInt(a.replace(/[^0-9]/g, ""), 10) || 0;
+        const numB = parseInt(b.replace(/[^0-9]/g, ""), 10) || 0;
+        return numA - numB;
       });
 
       sortedRoster.forEach(name => {
@@ -972,11 +988,8 @@
         return; 
       }
 
-      if (count < 11) {
-        if (!confirm(`You currently have only ${count} player(s) selected (expected 11).\n\nDo you still want to lock in this play?`)) {
-          return;
-        }
-      } else if (count > 11) {
+      // Warn only if line-up exceeds 11
+      if (count > 11) {
         if (!confirm(`You currently have ${count} players selected (exceeds 11 by ${count - 11}).\n\nDo you still want to lock in this play?`)) {
           return;
         }
