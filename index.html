@@ -221,20 +221,25 @@
       transition: all 0.1s ease;
     }
 
+    /* Standard Selected Player */
     .player-chip.selected {
       border-color: var(--primary);
-      background-color: rgba(37, 99, 235, 0.2);
+      background-color: rgba(37, 99, 235, 0.35);
     }
 
+    /* Quota Met (Unselected) */
     .player-chip.met {
       border-color: var(--success);
-      opacity: 0.85;
+      background-color: rgba(22, 163, 74, 0.15);
+      opacity: 0.8;
     }
 
+    /* Quota Met (Selected) - High Contrast Fix */
     .player-chip.met.selected {
-      border-color: var(--primary);
-      background-color: rgba(37, 99, 235, 0.2);
       opacity: 1;
+      background-color: #1e3a8a;
+      border: 2px solid #60a5fa;
+      box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
     }
 
     .player-chip.disabled-player {
@@ -284,6 +289,10 @@
 
     .player-chip.met .status-dot {
       background-color: var(--success);
+    }
+
+    .player-chip.met.selected .status-dot {
+      background-color: #60a5fa;
     }
 
     /* Fixed Bottom Control Dock */
