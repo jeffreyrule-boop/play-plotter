@@ -69,7 +69,6 @@
       align-items: center;
     }
 
-    /* Action Status Indicator */
     .action-status {
       display: none;
       align-items: center;
@@ -178,7 +177,6 @@
       color: #f87171;
     }
 
-    /* Loading Spinner */
     .spinner {
       width: 12px;
       height: 12px;
@@ -192,7 +190,7 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Compact Roster Grid */
+    /* Roster Grid */
     .roster-container {
       padding: 10px 10px 0 10px;
     }
@@ -203,38 +201,37 @@
       gap: 6px;
     }
 
-    @media (min-width: 480px) {
+    @media (min-width: 520px) {
       .roster-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       }
     }
 
+    /* Redesigned Player Chip Layout */
     .player-chip {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 6px 10px;
+      padding: 6px 8px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 6px;
       cursor: pointer;
       transition: all 0.1s ease;
+      min-height: 48px;
     }
 
-    /* Standard Selected Player */
     .player-chip.selected {
       border-color: var(--primary);
       background-color: rgba(37, 99, 235, 0.35);
     }
 
-    /* Quota Met (Unselected) */
     .player-chip.met {
       border-color: var(--success);
       background-color: rgba(22, 163, 74, 0.15);
       opacity: 0.8;
     }
 
-    /* Quota Met (Selected) - High Contrast Fix */
     .player-chip.met.selected {
       opacity: 1;
       background-color: #1e3a8a;
@@ -255,32 +252,59 @@
       cursor: pointer;
     }
 
-    .chip-info {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+    /* 1. Player Number (Far Left) */
+    .chip-number {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #60a5fa;
+      min-width: 28px;
+      flex-shrink: 0;
     }
 
+    /* 2. Player Name (Middle) */
     .chip-name {
       font-weight: 600;
       font-size: 0.82rem;
-      white-space: nowrap;
+      line-height: 1.15;
+      flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
-    .chip-badge {
-      font-size: 0.7rem;
+    /* 3. Play Count Badge (Right-aligned) */
+    .chip-count-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .chip-count-num {
+      font-size: 1.35rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text-main);
+    }
+
+    .chip-count-tag {
+      font-size: 0.62rem;
       color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 1px;
     }
 
+    /* 4. Status Indicator Dot (Far Right) */
     .status-dot {
       width: 10px;
       height: 10px;
       border-radius: 50%;
       background-color: var(--border);
       flex-shrink: 0;
-      margin-left: 6px;
     }
 
     .player-chip.selected .status-dot {
@@ -295,7 +319,7 @@
       background-color: #60a5fa;
     }
 
-    /* Fixed Bottom Control Dock */
+    /* Bottom Control Dock */
     .bottom-dock {
       position: fixed;
       bottom: 0;
@@ -499,19 +523,14 @@
     </div>
     
     <div class="header-actions">
-      <!-- Syncing / Status Indicator -->
       <div class="action-status" id="actionStatus">
         <div class="spinner" id="statusSpinner"></div>
         <span id="statusText">Syncing...</span>
       </div>
 
-      <!-- How-To / Info Button -->
       <button class="btn-sm btn-help" onclick="openHelpModal()">❓ Help</button>
-
-      <!-- Done Editing Toggle Button -->
       <button class="btn-sm btn-done-editing" id="btnDoneEditing" onclick="toggleEditMode()">Done Editing</button>
 
-      <!-- Context Dropdown Menu -->
       <div class="menu-container">
         <button class="btn-sm" onclick="toggleMenu(event)">Menu ▾</button>
         <div class="dropdown-menu" id="contextMenu">
@@ -550,7 +569,7 @@
     </div>
   </div>
 
-  <!-- How-To / Help Modal -->
+  <!-- Help Modal -->
   <div class="modal-overlay" id="helpModal">
     <div class="modal-card">
       <h3>How To Use Falcons Play Plotter</h3>
@@ -558,39 +577,31 @@
         
         <div class="help-section">
           <h4>1. 🏈 Select Players on the Field</h4>
-          <p>Tap a player's box to select them for the active play. Tapped boxes light up blue with a blue dot.</p>
+          <p>Tap a player's box to select them for the active play. Selected boxes glow blue.</p>
         </div>
 
         <div class="help-section">
           <h4>2. ⏱️ Quarters & Lineup Status</h4>
           <ul>
-            <li>Select the current quarter (<strong>Q1–Q4</strong>) at the bottom.</li>
-            <li>The banner tells you how many players are selected. Target is <strong>11 players</strong>.</li>
-            <li>Tap <strong>"Lock In Play"</strong> to credit everyone on field.</li>
+            <li>Select current quarter (<strong>Q1–Q4</strong>).</li>
+            <li>Target is <strong>11 players</strong> on field.</li>
+            <li>Tap <strong>"Lock In Play"</strong> to credit all selected players.</li>
           </ul>
         </div>
 
         <div class="help-section">
           <h4>3. ↩️ Undo Last Play</h4>
-          <p>Made a mistake? Tap <strong>"Undo"</strong> at the bottom to remove the previous play and return the players on field to their exact previous state.</p>
+          <p>Tap <strong>"Undo"</strong> to revert the last play recorded.</p>
         </div>
 
         <div class="help-section">
-          <h4>4. 🔄 Syncing to Google Sheets</h4>
-          <p>Tap <strong>Menu ▾</strong> and select <strong>🔄 Sync</strong> to push game data to the master spreadsheet. The <strong>Syncing...</strong> spinner appears in the top header while updating.</p>
+          <h4>4. 🔄 Syncing Data</h4>
+          <p>Tap <strong>Menu ▾</strong> and select <strong>🔄 Sync</strong> to update Google Sheets.</p>
         </div>
 
         <div class="help-section">
-          <h4>5. ✏️ Manual Adjustments & Absences</h4>
-          <ul>
-            <li>Tap <strong>Menu ▾</strong> and select <strong>✏️ Edit</strong> (or tap the yellow <strong>Done Editing</strong> button when finished).</li>
-            <li>While editing, tap any player to change their total play count manually or mark them as <strong>Absent / Injured / OUT</strong>.</li>
-          </ul>
-        </div>
-
-        <div class="help-section">
-          <h4>6. 👤 Plotter Name & Game Title</h4>
-          <p>Tap your name or game title in the top-left corner anytime to update or rename your tracking session.</p>
+          <h4>5. ✏️ Manual Adjustments</h4>
+          <p>Use <strong>Menu ▾ -> ✏️ Edit</strong> to adjust play totals or mark players absent/injured.</p>
         </div>
 
       </div>
@@ -649,60 +660,41 @@
 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
 
-    function openHelpModal() {
-      document.getElementById("helpModal").style.display = "flex";
+    // Helper to separate "#15" from "Cruz Nichols"
+    function parsePlayerName(rawString) {
+      const match = rawString.match(/^(#\d+)\s+(.*)$/);
+      if (match) {
+        return { num: match[1], name: match[2] };
+      }
+      return { num: "#", name: rawString };
     }
 
-    function closeHelpModal() {
-      document.getElementById("helpModal").style.display = "none";
-    }
+    function openHelpModal() { document.getElementById("helpModal").style.display = "flex"; }
+    function closeHelpModal() { document.getElementById("helpModal").style.display = "none"; }
 
     function toggleMenu(event) {
       event.stopPropagation();
       document.getElementById("contextMenu").classList.toggle("show");
     }
 
-    function closeMenu() {
-      document.getElementById("contextMenu").classList.remove("show");
-    }
-
+    function closeMenu() { document.getElementById("contextMenu").classList.remove("show"); }
     window.addEventListener("click", () => closeMenu());
 
-    function handleMenuEdit() {
-      closeMenu();
-      toggleEditMode();
-    }
-
-    function handleMenuNewGame() {
-      closeMenu();
-      startNewGame();
-    }
-
-    function handleMenuSync() {
-      closeMenu();
-      syncToGoogleSheet();
-    }
-
-    function handleMenuReset() {
-      closeMenu();
-      resetGame();
-    }
+    function handleMenuEdit() { closeMenu(); toggleEditMode(); }
+    function handleMenuNewGame() { closeMenu(); startNewGame(); }
+    function handleMenuSync() { closeMenu(); syncToGoogleSheet(); }
+    function handleMenuReset() { closeMenu(); resetGame(); }
 
     function generateFunUsername() {
       const adjectives = ["Bold", "Swift", "Iron", "Storm", "Apex", "Shadow", "Alpha", "Turbo"];
       const nouns = ["Falcon", "Hawk", "Wing", "Talent", "Plotter", "Scout", "Coach", "Eagle"];
       const num = Math.floor(Math.random() * 90) + 10;
-      const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-      const noun = nouns[Math.floor(Math.random() * nouns.length)];
-      return `${adj}${noun}${num}`;
+      return `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${num}`;
     }
 
     function getDefaultGameName() {
       const today = new Date();
-      const month = today.getMonth() + 1;
-      const day = today.getDate();
-      const year = today.getFullYear();
-      return `Game ${month}/${day}/${year}`;
+      return `Game ${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
     }
 
     function initUserAndGame() {
@@ -730,13 +722,9 @@
     function startNewGame() {
       const defaultGame = getDefaultGameName();
       const entered = prompt("Enter Title for New Game:", defaultGame);
-      
-      if (entered === null) return; // User canceled prompt
+      if (entered === null) return;
 
-      const newGameTitle = (entered && entered.trim() !== "") ? entered.trim() : defaultGame;
-
-      // Clear current state
-      currentGame = newGameTitle;
+      currentGame = (entered && entered.trim() !== "") ? entered.trim() : defaultGame;
       currentQtr = 1;
       playNumber = 1;
       activePlayers.clear();
@@ -746,11 +734,9 @@
         return acc; 
       }, {});
 
-      // Persist new game state
       localStorage.setItem("falcons_game_name", currentGame);
       saveToLocalStorage();
 
-      // Update UI elements
       document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
         btn.classList.toggle("active", idx === 0);
       });
@@ -764,9 +750,7 @@
       if (updated && updated.trim() !== "") {
         currentUser = updated.trim();
         localStorage.setItem("falcons_user_name", currentUser);
-        
         playHistory.forEach(item => { item.user = currentUser; });
-
         updateSessionBar();
         saveToLocalStorage();
         render();
@@ -778,9 +762,7 @@
       if (updated && updated.trim() !== "") {
         currentGame = updated.trim();
         localStorage.setItem("falcons_game_name", currentGame);
-        
         playHistory.forEach(item => { item.game = currentGame; });
-
         updateSessionBar();
         saveToLocalStorage();
         render();
@@ -897,9 +879,9 @@
 
     function getPlayerCategoryRank(name) {
       const stats = playerStats[name];
-      if (stats.disabled) return 2; // Disabled/Out players last
-      if (stats.total >= 10) return 1; // Quota met players middle
-      return 0; // Active needs quota players first
+      if (stats.disabled) return 2;
+      if (stats.total >= 10) return 1;
+      return 0;
     }
 
     function render() {
@@ -939,44 +921,42 @@
         const rankA = getPlayerCategoryRank(a);
         const rankB = getPlayerCategoryRank(b);
 
-        if (rankA !== rankB) {
-          return rankA - rankB;
-        }
+        if (rankA !== rankB) return rankA - rankB;
 
-        // Secondary sort by numerical jersey order within the same status category
         const numA = parseInt(a.replace(/[^0-9]/g, ""), 10) || 0;
         const numB = parseInt(b.replace(/[^0-9]/g, ""), 10) || 0;
         return numA - numB;
       });
 
-      sortedRoster.forEach(name => {
-        const stats = playerStats[name];
-        const isSelected = activePlayers.has(name);
+      sortedRoster.forEach(fullName => {
+        const stats = playerStats[fullName];
+        const isSelected = activePlayers.has(fullName);
         const isMet = stats.total >= 10;
         const isDisabled = stats.disabled;
+
+        const { num, name } = parsePlayerName(fullName);
 
         const chip = document.createElement("div");
         chip.className = `player-chip ${isSelected ? 'selected' : ''} ${isMet ? 'met' : ''} ${isDisabled ? 'disabled-player' : ''} ${isEditMode ? 'edit-mode-active' : ''}`;
         
         chip.onclick = () => {
           if (isEditMode) {
-            openEditModal(name);
+            openEditModal(fullName);
           } else {
-            if (!isDisabled) togglePlayer(name);
+            if (!isDisabled) togglePlayer(fullName);
           }
         };
 
-        let badgeText = `Plays: ${stats.total}`;
-        if (isDisabled) {
-          badgeText = `OUT (${stats.total})`;
-        } else if (isMet) {
-          badgeText = `Met (${stats.qtrMet})`;
-        }
+        let tagText = "PLAYS";
+        if (isDisabled) tagText = "OUT";
+        else if (isMet) tagText = stats.qtrMet;
 
         chip.innerHTML = `
-          <div class="chip-info">
-            <span class="chip-name">${name}</span>
-            <span class="chip-badge">${badgeText}</span>
+          <div class="chip-number">${num}</div>
+          <div class="chip-name">${name}</div>
+          <div class="chip-count-box">
+            <span class="chip-count-num">${stats.total}</span>
+            <span class="chip-count-tag">${tagText}</span>
           </div>
           <div class="status-dot"></div>
         `;
@@ -1005,7 +985,6 @@
         return; 
       }
 
-      // Warn only if line-up exceeds 11
       if (count > 11) {
         if (!confirm(`You currently have ${count} players selected (exceeds 11 by ${count - 11}).\n\nDo you still want to lock in this play?`)) {
           return;
