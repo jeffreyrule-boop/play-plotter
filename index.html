@@ -29,7 +29,7 @@
     body {
       background-color: var(--bg-color);
       color: var(--text-main);
-      padding-bottom: 140px; /* Space reserved for bottom sticky deck */
+      padding-bottom: 140px;
     }
 
     /* Top Navigation Bar */
@@ -65,7 +65,7 @@
 
     .header-actions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
 
@@ -109,6 +109,11 @@
       justify-content: center;
       gap: 4px;
       transition: background-color 0.2s ease;
+    }
+
+    .btn-sm.btn-help {
+      background-color: #3b82f6;
+      color: #fff;
     }
 
     .btn-sm.btn-done-editing {
@@ -373,11 +378,12 @@
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.75);
       display: none;
       justify-content: center;
       align-items: center;
       z-index: 200;
+      padding: 16px;
     }
 
     .modal-card {
@@ -385,11 +391,54 @@
       border: 1px solid var(--border);
       padding: 16px;
       border-radius: 10px;
-      width: 90%;
-      max-width: 320px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    .modal-card h3 { font-size: 1rem; margin-bottom: 10px; }
+    .modal-card h3 { 
+      font-size: 1.1rem; 
+      margin-bottom: 12px; 
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .modal-body {
+      overflow-y: auto;
+      margin-bottom: 12px;
+      padding-right: 4px;
+    }
+
+    .help-section {
+      margin-bottom: 14px;
+    }
+
+    .help-section h4 {
+      font-size: 0.9rem;
+      color: #60a5fa;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .help-section p, .help-section ul {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .help-section ul {
+      padding-left: 18px;
+      margin-top: 4px;
+    }
+
+    .help-section li {
+      margin-bottom: 4px;
+    }
 
     .form-group {
       margin-bottom: 12px;
@@ -418,7 +467,7 @@
     .modal-buttons {
       display: flex;
       gap: 6px;
-      margin-top: 12px;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -437,6 +486,9 @@
         <div class="spinner" id="statusSpinner"></div>
         <span id="statusText">Syncing...</span>
       </div>
+
+      <!-- How-To / Info Button -->
+      <button class="btn-sm btn-help" onclick="openHelpModal()">❓ Help</button>
 
       <!-- Done Editing Toggle Button -->
       <button class="btn-sm btn-done-editing" id="btnDoneEditing" onclick="toggleEditMode()">Done Editing</button>
@@ -459,7 +511,7 @@
     <div class="roster-grid" id="playerGrid"></div>
   </div>
 
-  <!-- Fixed Bottom Dock: Quarters, Play Banner, and Action Buttons -->
+  <!-- Fixed Bottom Dock -->
   <div class="bottom-dock">
     <div class="qtr-selector">
       <div class="qtr-btn active" onclick="setQtr(1)">Q1</div>
@@ -479,17 +531,69 @@
     </div>
   </div>
 
+  <!-- How-To / Help Modal -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal-card">
+      <h3>How To Use Falcons Play Plotter</h3>
+      <div class="modal-body">
+        
+        <div class="help-section">
+          <h4>1. 🏈 Select Players on the Field</h4>
+          <p>Tap a player's box to select them for the active play. Tapped boxes light up blue with a blue dot.</p>
+        </div>
+
+        <div class="help-section">
+          <h4>2. ⏱️ Quarters & Lineup Status</h4>
+          <ul>
+            <li>Select the current quarter (<strong>Q1–Q4</strong>) at the bottom.</li>
+            <li>The banner tells you how many players are selected. Target is <strong>11 players</strong>.</li>
+            <li>Once 11 players are highlighted, tap <strong>"Lock In Play"</strong> to credit everyone on field.</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h4>3. ↩️ Undo Last Play</h4>
+          <p>Made a mistake? Tap <strong>"Undo"</strong> at the bottom to remove the previous play and return the players on field to their exact previous state.</p>
+        </div>
+
+        <div class="help-section">
+          <h4>4. 🔄 Syncing to Google Sheets</h4>
+          <p>Tap <strong>Menu ▾</strong> and select <strong>🔄 Sync</strong> to push game data to the master spreadsheet. The <strong>Syncing...</strong> spinner appears in the top header while updating.</p>
+        </div>
+
+        <div class="help-section">
+          <h4>5. ✏️ Manual Adjustments & Absences</h4>
+          <ul>
+            <li>Tap <strong>Menu ▾</strong> and select <strong>✏️ Edit</strong> (or tap the yellow <strong>Done Editing</strong> button when finished).</li>
+            <li>While editing, tap any player to change their total play count manually or mark them as <strong>Absent / Injured / OUT</strong>.</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h4>6. 👤 Plotter Name & Game Title</h4>
+          <p>Tap your name or game title in the top-left corner anytime to update or rename your tracking session.</p>
+        </div>
+
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-action" style="width:100%" onclick="closeHelpModal()">Got It!</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Edit Player Modal -->
   <div class="modal-overlay" id="editModal">
     <div class="modal-card">
       <h3 id="modalPlayerTitle">Edit Player</h3>
-      <div class="form-group">
-        <label>Adjust Play Count:</label>
-        <input type="number" id="modalPlayCount" min="0" value="0">
-      </div>
-      <div class="form-group checkbox-group">
-        <input type="checkbox" id="modalDisabled">
-        <label for="modalDisabled">Mark Out / Absent / Injured</label>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Adjust Play Count:</label>
+          <input type="number" id="modalPlayCount" min="0" value="0">
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="modalDisabled">
+          <label for="modalDisabled">Mark Out / Absent / Injured</label>
+        </div>
       </div>
       <div class="modal-buttons">
         <button class="btn-secondary" style="flex:1" onclick="closeEditModal()">Cancel</button>
@@ -526,7 +630,14 @@
 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
 
-    /* Context Menu & Header Action Logic */
+    function openHelpModal() {
+      document.getElementById("helpModal").style.display = "flex";
+    }
+
+    function closeHelpModal() {
+      document.getElementById("helpModal").style.display = "none";
+    }
+
     function toggleMenu(event) {
       event.stopPropagation();
       document.getElementById("contextMenu").classList.toggle("show");
@@ -736,7 +847,6 @@
       document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${count} / 11`;
       document.getElementById("btnPlayNum").innerText = playNumber;
 
-      // Update Edit Mode UI controls
       const btnDoneEditing = document.getElementById("btnDoneEditing");
       const menuEditItem = document.getElementById("menuEditItem");
       
@@ -911,7 +1021,6 @@
       const spinnerEl = document.getElementById("statusSpinner");
       const textEl = document.getElementById("statusText");
 
-      // Show Syncing Status
       statusEl.className = "action-status syncing";
       spinnerEl.style.display = "block";
       textEl.innerText = "Syncing...";
@@ -929,7 +1038,6 @@
           })
         });
 
-        // Show Synced Status
         statusEl.className = "action-status synced";
         spinnerEl.style.display = "none";
         textEl.innerText = "✓ Synced";
