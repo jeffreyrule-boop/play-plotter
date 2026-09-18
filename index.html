@@ -879,8 +879,7 @@
 
     function getPlayerCategoryRank(name) {
       const stats = playerStats[name];
-      if (stats.disabled) return 2;
-      if (stats.total >= 10) return 1;
+      if (stats.disabled) return 1;
       return 0;
     }
 
