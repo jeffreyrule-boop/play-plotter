@@ -195,17 +195,51 @@
       padding: 10px 10px 0 10px;
     }
 
-    .roster-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
-    }
+  /* Roster Grid - Column-First (Top-to-Bottom) Layout */
+.roster-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
 
-    @media (min-width: 520px) {
-      .roster-grid {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      }
-    }
+/* Tablet / Medium Screens: 3 Columns */
+@media (min-width: 640px) {
+  .roster-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .player-chip {
+    padding: 12px 14px;
+  }
+  .player-number {
+    font-size: 1.25rem;
+  }
+  .player-name {
+    font-size: 1rem;
+  }
+  .play-counter {
+    font-size: 1.1rem;
+    padding: 6px 12px;
+  }
+}
+
+/* Large Screens / Desktop: 4 Columns */
+@media (min-width: 1024px) {
+  .roster-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .player-chip {
+    padding: 16px 18px;
+  }
+  .player-number {
+    font-size: 1.4rem;
+  }
+  .player-name {
+    font-size: 1.15rem;
+  }
+}
 
     /* Redesigned Player Chip Layout */
     .player-chip {
@@ -961,6 +995,18 @@
         `;
         gridEl.appendChild(chip);
       });
+
+      // Calculate column balance for vertical top-to-bottom fill
+      const totalPlayers = sortedRoster.length;
+      const screenWidth = window.innerWidth;
+      let numCols = 2; // Mobile default
+      if (screenWidth >= 1024) {
+        numCols = 4; // Desktop
+      } else if (screenWidth >= 640) {
+        numCols = 3; // Tablet
+      }
+      const rowsPerCol = Math.ceil(totalPlayers / numCols);
+      gridEl.style.gridTemplateRows = `repeat(${rowsPerCol}, min-content)`;
     }
 
     function togglePlayer(name) {
@@ -1100,6 +1146,7 @@
 
     loadFromLocalStorage();
     render();
+    window.addEventListener('resize', render);
   </script>
 </body>
 </html>
