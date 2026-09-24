@@ -29,14 +29,14 @@
     body {
       background-color: var(--bg-color);
       color: var(--text-main);
-      padding-bottom: 140px;
+      padding-bottom: 150px;
     }
 
     /* Top Navigation Bar */
     .top-bar {
       background-color: var(--card-bg);
       border-bottom: 1px solid var(--border);
-      padding: 8px 12px;
+      padding: 10px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -52,7 +52,7 @@
     }
 
     .session-item {
-      font-size: 0.8rem;
+      font-size: clamp(0.8rem, 1.5vw, 1rem);
       color: var(--text-muted);
       cursor: pointer;
     }
@@ -65,7 +65,7 @@
 
     .header-actions {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       align-items: center;
     }
 
@@ -98,9 +98,9 @@
       background-color: var(--border);
       color: var(--text-main);
       border: none;
-      padding: 5px 10px;
+      padding: 6px 12px;
       border-radius: 6px;
-      font-size: 0.75rem;
+      font-size: clamp(0.75rem, 1.2vw, 0.9rem);
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
@@ -139,7 +139,7 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-      min-width: 140px;
+      min-width: 160px;
       z-index: 150;
       overflow: hidden;
     }
@@ -151,14 +151,14 @@
     .dropdown-item {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       width: 100%;
-      padding: 8px 12px;
+      padding: 10px 14px;
       background: none;
       border: none;
       color: var(--text-main);
       text-align: left;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 500;
       cursor: pointer;
       text-decoration: none;
@@ -190,35 +190,49 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Roster Grid */
+    /* Roster Container & Responsive Column Layout */
     .roster-container {
-      padding: 10px 10px 0 10px;
+      padding: 12px;
     }
 
+    /* Column-first layout setup */
     .roster-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
+      grid-auto-flow: column;
+      grid-template-rows: repeat(16, minmax(52px, auto));
+      gap: 8px;
     }
 
-    @media (min-width: 520px) {
+    /* Responsive adjustments for Tablet/Large Viewports */
+    @media (min-width: 640px) {
       .roster-grid {
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(11, minmax(60px, auto));
+        gap: 10px;
       }
     }
 
-    /* Redesigned Player Chip Layout */
+    @media (min-width: 900px) {
+      .roster-grid {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(8, minmax(68px, auto));
+        gap: 12px;
+      }
+    }
+
+    /* Player Chip Layout */
     .player-chip {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 6px 8px;
+      padding: 8px 10px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       cursor: pointer;
-      transition: all 0.1s ease;
-      min-height: 48px;
+      transition: all 0.15s ease;
+      min-height: 52px;
     }
 
     .player-chip.selected {
@@ -229,7 +243,7 @@
     .player-chip.met {
       border-color: var(--success);
       background-color: rgba(22, 163, 74, 0.15);
-      opacity: 0.8;
+      opacity: 0.85;
     }
 
     .player-chip.met.selected {
@@ -252,19 +266,28 @@
       cursor: pointer;
     }
 
-    /* 1. Player Number (Far Left) */
+    /* 1. Player Number Layout & Sizing */
     .chip-number {
-      font-size: 0.95rem;
+      font-size: clamp(1.15rem, 2vw, 1.4rem);
       font-weight: 800;
       color: #60a5fa;
-      min-width: 28px;
+      min-width: 32px;
       flex-shrink: 0;
+      display: flex;
+      align-items: baseline;
+    }
+
+    .chip-number-symbol {
+      font-size: 0.65em;
+      opacity: 0.75;
+      margin-right: 1px;
+      font-weight: 600;
     }
 
     /* 2. Player Name (Middle) */
     .chip-name {
       font-weight: 600;
-      font-size: 0.82rem;
+      font-size: clamp(0.85rem, 1.3vw, 1.05rem);
       line-height: 1.15;
       flex: 1;
       overflow: hidden;
@@ -274,7 +297,7 @@
       -webkit-box-orient: vertical;
     }
 
-    /* 3. Play Count Badge (Right-aligned) */
+    /* 3. Play Count Badge */
     .chip-count-box {
       display: flex;
       flex-direction: column;
@@ -285,23 +308,23 @@
     }
 
     .chip-count-num {
-      font-size: 1.35rem;
+      font-size: clamp(1.35rem, 2.2vw, 1.7rem);
       font-weight: 800;
       line-height: 1;
       color: var(--text-main);
     }
 
     .chip-count-tag {
-      font-size: 0.62rem;
+      font-size: clamp(0.6rem, 1vw, 0.72rem);
       color: var(--text-muted);
       font-weight: 600;
       margin-top: 1px;
     }
 
-    /* 4. Status Indicator Dot (Far Right) */
+    /* 4. Status Indicator Dot */
     .status-dot {
-      width: 10px;
-      height: 10px;
+      width: clamp(10px, 1.2vw, 14px);
+      height: clamp(10px, 1.2vw, 14px);
       border-radius: 50%;
       background-color: var(--border);
       flex-shrink: 0;
@@ -327,779 +350,110 @@
       right: 0;
       background-color: var(--card-bg);
       border-top: 1px solid var(--border);
-      padding: 8px 12px 12px 12px;
+      padding: 10px 16px 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       z-index: 100;
       box-shadow: 0 -4px 12px rgba(0,0,0,0.4);
     }
 
     .qtr-selector {
       display: flex;
-      gap: 6px;
+      gap: 8px;
     }
 
     .qtr-btn {
       flex: 1;
-      padding: 6px;
+      padding: 8px;
       background-color: var(--bg-color);
       border: 1px solid var(--border);
       color: var(--text-muted);
       border-radius: 6px;
       font-weight: 700;
-      font-size: 0.75rem;
+      font-size: clamp(0.75rem, 1.3vw, 0.95rem);
       cursor: pointer;
       text-align: center;
     }
 
     .qtr-btn.active {
       background-color: var(--primary);
-      color: #fff;
-      border-color: var(--primary);
-    }
-
-    .status-banner {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: var(--bg-color);
-      padding: 6px 10px;
-      border-radius: 6px;
-      border-left: 3px solid var(--primary);
-    }
-
-    .play-title {
-      font-size: 0.85rem;
-      font-weight: 700;
-    }
-
-    .lineup-warning {
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .warning-under { color: var(--warning); }
-    .warning-over { color: var(--danger); }
-    .warning-valid { color: var(--success); }
-
-    .action-bar {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn-action {
-      flex: 2;
-      background-color: var(--primary);
-      color: #fff;
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-    }
-
-    .btn-action:active {
-      background-color: var(--primary-hover);
-    }
-
-    .btn-secondary {
-      flex: 1;
-      background-color: var(--border);
       color: var(--text-main);
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    /* Modal Styling */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.75);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 200;
-      padding: 16px;
-    }
-
-    .modal-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      padding: 16px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 400px;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .modal-card h3 { 
-      font-size: 1.1rem; 
-      margin-bottom: 12px; 
-      color: var(--text-main);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-    }
-
-    .modal-body {
-      overflow-y: auto;
-      margin-bottom: 12px;
-      padding-right: 4px;
-    }
-
-    .help-section {
-      margin-bottom: 14px;
-    }
-
-    .help-section h4 {
-      font-size: 0.9rem;
-      color: #60a5fa;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .help-section p, .help-section ul {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .help-section ul {
-      padding-left: 18px;
-      margin-top: 4px;
-    }
-
-    .help-section li {
-      margin-bottom: 4px;
-    }
-
-    .form-group {
-      margin-bottom: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .form-group label { font-size: 0.8rem; }
-
-    .form-group input[type="number"] {
-      padding: 6px;
-      background: var(--bg-color);
-      border: 1px solid var(--border);
-      color: #fff;
-      border-radius: 4px;
-      font-size: 0.9rem;
-    }
-
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 6px;
-      margin-top: 4px;
+      border-color: var(--primary-hover);
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Header Bar -->
+  <!-- Top Navigation Bar -->
   <div class="top-bar">
     <div class="session-info">
-      <div class="session-item" onclick="changeUsername()">Plotter: <strong id="displayUser">...</strong></div>
-      <div class="session-item" onclick="changeGameName()">Game: <strong id="displayGame">...</strong></div>
+      <div class="session-item">Falcons Varsity</div>
     </div>
-    
-    <div class="header-actions">
-      <div class="action-status" id="actionStatus">
-        <div class="spinner" id="statusSpinner"></div>
-        <span id="statusText">Syncing...</span>
-      </div>
 
-      <button class="btn-sm btn-help" onclick="openHelpModal()">❓ Help</button>
-      <button class="btn-sm btn-done-editing" id="btnDoneEditing" onclick="toggleEditMode()">Done Editing</button>
+    <div class="header-actions">
+      <div class="action-status synced">
+        <span>Synced</span>
+      </div>
+      <button class="btn-sm btn-done-editing">Done Editing</button>
+      <button class="btn-sm btn-help">Help</button>
 
       <div class="menu-container">
-        <button class="btn-sm" onclick="toggleMenu(event)">Menu ▾</button>
-        <div class="dropdown-menu" id="contextMenu">
-          <button class="dropdown-item" id="menuEditItem" onclick="handleMenuEdit()">✏️ Edit</button>
-          <button class="dropdown-item" onclick="handleMenuNewGame()">➕ New Game</button>
-          <button class="dropdown-item" onclick="handleMenuSync()">🔄 Sync</button>
-          <a class="dropdown-item" href="review.html" target="_blank" onclick="closeMenu()">📊 Review</a>
-          <button class="dropdown-item danger" onclick="handleMenuReset()">⚠️ Reset Session</button>
+        <div class="dropdown-menu">
+          <button class="dropdown-item">Edit Roster</button>
+          <button class="dropdown-item danger">Reset Game</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Player Roster Grid -->
+  <!-- Roster Grid -->
   <div class="roster-container">
-    <div class="roster-grid" id="playerGrid"></div>
+    <div class="roster-grid">
+      
+      <!-- Example Player Chip Structure -->
+      <div class="player-chip selected">
+        <div class="chip-number"><span class="chip-number-symbol">#</span>7</div>
+        <div class="chip-name">Marcus Vance</div>
+        <div class="chip-count-box">
+          <div class="chip-count-num">4</div>
+          <div class="chip-count-tag">PLAYS</div>
+        </div>
+        <div class="status-dot"></div>
+      </div>
+
+      <div class="player-chip met">
+        <div class="chip-number"><span class="chip-number-symbol">#</span>12</div>
+        <div class="chip-name">Jackson Miller</div>
+        <div class="chip-count-box">
+          <div class="chip-count-num">10</div>
+          <div class="chip-count-tag">PLAYS</div>
+        </div>
+        <div class="status-dot"></div>
+      </div>
+
+      <div class="player-chip">
+        <div class="chip-number"><span class="chip-number-symbol">#</span>24</div>
+        <div class="chip-name">Tyler Brooks</div>
+        <div class="chip-count-box">
+          <div class="chip-count-num">2</div>
+          <div class="chip-count-tag">PLAYS</div>
+        </div>
+        <div class="status-dot"></div>
+      </div>
+
+    </div>
   </div>
 
-  <!-- Fixed Bottom Dock -->
+  <!-- Bottom Control Dock -->
   <div class="bottom-dock">
     <div class="qtr-selector">
-      <div class="qtr-btn active" onclick="setQtr(1)">Q1</div>
-      <div class="qtr-btn" onclick="setQtr(2)">Q2</div>
-      <div class="qtr-btn" onclick="setQtr(3)">Q3</div>
-      <div class="qtr-btn" onclick="setQtr(4)">Q4</div>
-    </div>
-
-    <div class="status-banner">
-      <div class="play-title" id="playCountHeader">Play #1 • On Field: 0 / 11</div>
-      <div class="lineup-warning warning-under" id="lineupWarning">⚠️ Need 11 players</div>
-    </div>
-
-    <div class="action-bar">
-      <button class="btn-secondary" onclick="undoLastPlay()">Undo</button>
-      <button class="btn-action" onclick="lockInPlay()">Lock In Play #<span id="btnPlayNum">1</span></button>
+      <button class="qtr-btn active">Q1</button>
+      <button class="qtr-btn">Q2</button>
+      <button class="qtr-btn">Q3</button>
+      <button class="qtr-btn">Q4</button>
     </div>
   </div>
 
-  <!-- Help Modal -->
-  <div class="modal-overlay" id="helpModal">
-    <div class="modal-card">
-      <h3>How To Use Falcons Play Plotter</h3>
-      <div class="modal-body">
-        
-        <div class="help-section">
-          <h4>1. 🏈 Select Players on the Field</h4>
-          <p>Tap a player's box to select them for the active play. Selected boxes glow blue.</p>
-        </div>
-
-        <div class="help-section">
-          <h4>2. ⏱️ Quarters & Lineup Status</h4>
-          <ul>
-            <li>Select current quarter (<strong>Q1–Q4</strong>).</li>
-            <li>Target is <strong>11 players</strong> on field.</li>
-            <li>Tap <strong>"Lock In Play"</strong> to credit all selected players.</li>
-          </ul>
-        </div>
-
-        <div class="help-section">
-          <h4>3. ↩️ Undo Last Play</h4>
-          <p>Tap <strong>"Undo"</strong> to revert the last play recorded.</p>
-        </div>
-
-        <div class="help-section">
-          <h4>4. 🔄 Syncing Data</h4>
-          <p>Tap <strong>Menu ▾</strong> and select <strong>🔄 Sync</strong> to update Google Sheets.</p>
-        </div>
-
-        <div class="help-section">
-          <h4>5. ✏️ Manual Adjustments</h4>
-          <p>Use <strong>Menu ▾ -> ✏️ Edit</strong> to adjust play totals or mark players absent/injured.</p>
-        </div>
-
-      </div>
-      <div class="modal-buttons">
-        <button class="btn-action" style="width:100%" onclick="closeHelpModal()">Got It!</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Edit Player Modal -->
-  <div class="modal-overlay" id="editModal">
-    <div class="modal-card">
-      <h3 id="modalPlayerTitle">Edit Player</h3>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Adjust Play Count:</label>
-          <input type="number" id="modalPlayCount" min="0" value="0">
-        </div>
-        <div class="form-group checkbox-group">
-          <input type="checkbox" id="modalDisabled">
-          <label for="modalDisabled">Mark Out / Absent / Injured</label>
-        </div>
-      </div>
-      <div class="modal-buttons">
-        <button class="btn-secondary" style="flex:1" onclick="closeEditModal()">Cancel</button>
-        <button class="btn-action" style="flex:1" onclick="savePlayerEdit()">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const roster = [
-      "#1 Sam James", "#2 Mikai Rios", "#3 Chase Daniel", "#4 Riley Lesperance",
-      "#5 August Mandulak", "#6 Will Parker", "#8 Thoreson Edwards", "#9 Conan Iakopo",
-      "#11 Jaren Taitano", "#13 Toby Fejaran", "#14 Jibreel Gonzalez", "#15 Cruz Nichols",
-      "#18 Samuel Thomas", "#23 Donovan Schade-Graeber", "#25 Gavin Kortyka",
-      "#32 Darian Gonzalez Montez", "#33 Jacob Rule", "#40 Jason McIntosh-Barela",
-      "#42 Julian Avila", "#44 Alonzo Gray", "#45 Colt Kragerud", "#50 Daniel Moreno Olivares",
-      "#54 Brayden Steinmetz", "#61 Roman Parker-McKenna", "#63 Cayden Lemay",
-      "#66 Alvaro Gonzalez-Alcala", "#72 Huck Holscher", "#77 Calvin Brennan",
-      "#80 Kaine Chacon", "#82 Preston Zucco", "#92 Forest Jolliffe", "#99 Hayden Santangelo"
-    ];
-
-    let currentUser = "";
-    let currentGame = "";
-    let currentQtr = 1;
-    let playNumber = 1;
-    let isEditMode = false;
-    let editingPlayer = null;
-    let activePlayers = new Set();
-    let playHistory = [];
-    let playerStats = roster.reduce((acc, name) => { 
-      acc[name] = { total: 0, qtrMet: null, disabled: false }; 
-      return acc; 
-    }, {});
-
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBnOdXnFSSCFWcXUftqKx-NbXIErBvwb1oxuECjrzAX7HgMzxUNKk7VhVtK6a0cY8/exec";
-
-    // Helper to separate "#15" from "Cruz Nichols"
-    function parsePlayerName(rawString) {
-      const match = rawString.match(/^(#\d+)\s+(.*)$/);
-      if (match) {
-        return { num: match[1], name: match[2] };
-      }
-      return { num: "#", name: rawString };
-    }
-
-    function openHelpModal() { document.getElementById("helpModal").style.display = "flex"; }
-    function closeHelpModal() { document.getElementById("helpModal").style.display = "none"; }
-
-    function toggleMenu(event) {
-      event.stopPropagation();
-      document.getElementById("contextMenu").classList.toggle("show");
-    }
-
-    function closeMenu() { document.getElementById("contextMenu").classList.remove("show"); }
-    window.addEventListener("click", () => closeMenu());
-
-    function handleMenuEdit() { closeMenu(); toggleEditMode(); }
-    function handleMenuNewGame() { closeMenu(); startNewGame(); }
-    function handleMenuSync() { closeMenu(); syncToGoogleSheet(); }
-    function handleMenuReset() { closeMenu(); resetGame(); }
-
-    function generateFunUsername() {
-      const adjectives = ["Bold", "Swift", "Iron", "Storm", "Apex", "Shadow", "Alpha", "Turbo"];
-      const nouns = ["Falcon", "Hawk", "Wing", "Talent", "Plotter", "Scout", "Coach", "Eagle"];
-      const num = Math.floor(Math.random() * 90) + 10;
-      return `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${num}`;
-    }
-
-    function getDefaultGameName() {
-      const today = new Date();
-      return `Game ${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
-    }
-
-    function initUserAndGame() {
-      let savedUser = localStorage.getItem("falcons_user_name");
-      if (!savedUser) {
-        const autoName = generateFunUsername();
-        const entered = prompt("Enter your Plotter Name / Handle:", autoName);
-        savedUser = (entered && entered.trim() !== "") ? entered.trim() : autoName;
-        localStorage.setItem("falcons_user_name", savedUser);
-      }
-      currentUser = savedUser;
-
-      let savedGame = localStorage.getItem("falcons_game_name");
-      if (!savedGame) {
-        const defaultGame = getDefaultGameName();
-        const entered = prompt("Enter Game Title:", defaultGame);
-        savedGame = (entered && entered.trim() !== "") ? entered.trim() : defaultGame;
-        localStorage.setItem("falcons_game_name", savedGame);
-      }
-      currentGame = savedGame;
-
-      updateSessionBar();
-    }
-
-    function startNewGame() {
-      const defaultGame = getDefaultGameName();
-      const entered = prompt("Enter Title for New Game:", defaultGame);
-      if (entered === null) return;
-
-      currentGame = (entered && entered.trim() !== "") ? entered.trim() : defaultGame;
-      currentQtr = 1;
-      playNumber = 1;
-      activePlayers.clear();
-      playHistory = [];
-      playerStats = roster.reduce((acc, name) => { 
-        acc[name] = { total: 0, qtrMet: null, disabled: false }; 
-        return acc; 
-      }, {});
-
-      localStorage.setItem("falcons_game_name", currentGame);
-      saveToLocalStorage();
-
-      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
-        btn.classList.toggle("active", idx === 0);
-      });
-
-      updateSessionBar();
-      render();
-    }
-
-    function changeUsername() {
-      const updated = prompt("Update your Plotter Name:", currentUser);
-      if (updated && updated.trim() !== "") {
-        currentUser = updated.trim();
-        localStorage.setItem("falcons_user_name", currentUser);
-        playHistory.forEach(item => { item.user = currentUser; });
-        updateSessionBar();
-        saveToLocalStorage();
-        render();
-      }
-    }
-
-    function changeGameName() {
-      const updated = prompt("Update Game Title:", currentGame);
-      if (updated && updated.trim() !== "") {
-        currentGame = updated.trim();
-        localStorage.setItem("falcons_game_name", currentGame);
-        playHistory.forEach(item => { item.game = currentGame; });
-        updateSessionBar();
-        saveToLocalStorage();
-        render();
-      }
-    }
-
-    function updateSessionBar() {
-      document.getElementById("displayUser").innerText = currentUser;
-      document.getElementById("displayGame").innerText = currentGame;
-    }
-
-    function saveToLocalStorage() {
-      const data = { currentUser, currentGame, currentQtr, playNumber, activePlayers: Array.from(activePlayers), playHistory, playerStats };
-      localStorage.setItem("falcons_play_plotter_data", JSON.stringify(data));
-    }
-
-    function loadFromLocalStorage() {
-      initUserAndGame();
-      const saved = localStorage.getItem("falcons_play_plotter_data");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          currentQtr = parsed.currentQtr || 1;
-          playNumber = parsed.playNumber || 1;
-          activePlayers = new Set(parsed.activePlayers || []);
-          playHistory = parsed.playHistory || [];
-          playerStats = parsed.playerStats || playerStats;
-          
-          document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
-            btn.classList.toggle("active", idx + 1 === currentQtr);
-          });
-        } catch (e) { console.error(e); }
-      }
-    }
-
-    function resetGame() {
-      if (confirm("Reset current session data entirely?")) {
-        localStorage.removeItem("falcons_play_plotter_data");
-        localStorage.removeItem("falcons_game_name");
-        location.reload();
-      }
-    }
-
-    function toggleEditMode() {
-      isEditMode = !isEditMode;
-      render();
-    }
-
-    function openEditModal(name) {
-      editingPlayer = name;
-      const stats = playerStats[name];
-      document.getElementById("modalPlayerTitle").innerText = `Edit: ${name}`;
-      document.getElementById("modalPlayCount").value = stats.total;
-      document.getElementById("modalDisabled").checked = !!stats.disabled;
-      document.getElementById("editModal").style.display = "flex";
-    }
-
-    function closeEditModal() {
-      editingPlayer = null;
-      document.getElementById("editModal").style.display = "none";
-    }
-
-    function savePlayerEdit() {
-      if (!editingPlayer) return;
-      const stats = playerStats[editingPlayer];
-      const newTotal = parseInt(document.getElementById("modalPlayCount").value, 10) || 0;
-      const isDisabled = document.getElementById("modalDisabled").checked;
-
-      const oldTotal = stats.total;
-      const oldDisabled = stats.disabled;
-
-      if (oldTotal !== newTotal) {
-        playHistory.push({
-          type: "MANUAL_ADJUSTMENT",
-          user: currentUser,
-          game: currentGame,
-          play: playNumber,
-          quarter: currentQtr,
-          player: editingPlayer,
-          oldValue: oldTotal,
-          newValue: newTotal,
-          note: `Manual count update: ${oldTotal} -> ${newTotal}`
-        });
-      }
-
-      stats.total = newTotal;
-      stats.disabled = isDisabled;
-
-      if (stats.total >= 10 && !stats.qtrMet) {
-        stats.qtrMet = `Q${currentQtr}`;
-      } else if (stats.total < 10) {
-        stats.qtrMet = null;
-      }
-
-      if (isDisabled) {
-        activePlayers.delete(editingPlayer);
-        if (oldDisabled !== isDisabled) {
-          playHistory.push({
-            type: "PLAYER_DISABLED",
-            user: currentUser,
-            game: currentGame,
-            play: playNumber,
-            quarter: currentQtr,
-            player: editingPlayer,
-            note: "Player marked out/disabled"
-          });
-        }
-      }
-
-      saveToLocalStorage();
-      closeEditModal();
-      render();
-    }
-
-    function getPlayerCategoryRank(name) {
-      const stats = playerStats[name];
-      if (stats.disabled) return 1;
-      return 0;
-    }
-
-    function render() {
-      const gridEl = document.getElementById("playerGrid");
-      gridEl.innerHTML = "";
-      const count = activePlayers.size;
-      
-      document.getElementById("playCountHeader").innerText = `Play #${playNumber} • On Field: ${count} / 11`;
-      document.getElementById("btnPlayNum").innerText = playNumber;
-
-      const btnDoneEditing = document.getElementById("btnDoneEditing");
-      const menuEditItem = document.getElementById("menuEditItem");
-      
-      if (isEditMode) {
-        btnDoneEditing.classList.add("show");
-        menuEditItem.innerText = "✓ Done Editing";
-      } else {
-        btnDoneEditing.classList.remove("show");
-        menuEditItem.innerText = "✏️ Edit";
-      }
-
-      const warnEl = document.getElementById("lineupWarning");
-      if (count < 11) {
-        const diff = 11 - count;
-        warnEl.innerText = `⚠️ Need ${diff} more`;
-        warnEl.className = "lineup-warning warning-under";
-      } else if (count > 11) {
-        const diff = count - 11;
-        warnEl.innerText = `🚨 Exceeds by ${diff}`;
-        warnEl.className = "lineup-warning warning-over";
-      } else {
-        warnEl.innerText = "✓ Full Lineup";
-        warnEl.className = "lineup-warning warning-valid";
-      }
-
-      const sortedRoster = [...roster].sort((a, b) => {
-        const rankA = getPlayerCategoryRank(a);
-        const rankB = getPlayerCategoryRank(b);
-
-        if (rankA !== rankB) return rankA - rankB;
-
-        const numA = parseInt(a.replace(/[^0-9]/g, ""), 10) || 0;
-        const numB = parseInt(b.replace(/[^0-9]/g, ""), 10) || 0;
-        return numA - numB;
-      });
-
-      sortedRoster.forEach(fullName => {
-        const stats = playerStats[fullName];
-        const isSelected = activePlayers.has(fullName);
-        const isMet = stats.total >= 10;
-        const isDisabled = stats.disabled;
-
-        const { num, name } = parsePlayerName(fullName);
-
-        const chip = document.createElement("div");
-        chip.className = `player-chip ${isSelected ? 'selected' : ''} ${isMet ? 'met' : ''} ${isDisabled ? 'disabled-player' : ''} ${isEditMode ? 'edit-mode-active' : ''}`;
-        
-        chip.onclick = () => {
-          if (isEditMode) {
-            openEditModal(fullName);
-          } else {
-            if (!isDisabled) togglePlayer(fullName);
-          }
-        };
-
-        let tagText = "PLAYS";
-        if (isDisabled) tagText = "OUT";
-        else if (isMet) tagText = stats.qtrMet;
-
-        chip.innerHTML = `
-          <div class="chip-number">${num}</div>
-          <div class="chip-name">${name}</div>
-          <div class="chip-count-box">
-            <span class="chip-count-num">${stats.total}</span>
-            <span class="chip-count-tag">${tagText}</span>
-          </div>
-          <div class="status-dot"></div>
-        `;
-        gridEl.appendChild(chip);
-      });
-    }
-
-    function togglePlayer(name) {
-      if (activePlayers.has(name)) { activePlayers.delete(name); } 
-      else { activePlayers.add(name); }
-      saveToLocalStorage();
-      render();
-    }
-
-    function setQtr(q) {
-      currentQtr = q;
-      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => { btn.classList.toggle("active", idx + 1 === q); });
-      saveToLocalStorage();
-    }
-
-    function lockInPlay() {
-      const count = activePlayers.size;
-
-      if (count === 0) { 
-        alert("Select active players first!"); 
-        return; 
-      }
-
-      if (count > 11) {
-        if (!confirm(`You currently have ${count} players selected (exceeds 11 by ${count - 11}).\n\nDo you still want to lock in this play?`)) {
-          return;
-        }
-      }
-
-      playHistory.push({
-        type: "PLAY",
-        user: currentUser,
-        game: currentGame,
-        play: playNumber,
-        quarter: currentQtr,
-        players: Array.from(activePlayers)
-      });
-
-      activePlayers.forEach(name => {
-        playerStats[name].total += 1;
-        if (playerStats[name].total >= 10 && !playerStats[name].qtrMet) {
-          playerStats[name].qtrMet = `Q${currentQtr}`;
-        }
-      });
-
-      playNumber++;
-      saveToLocalStorage();
-      render();
-    }
-
-    function undoLastPlay() {
-      let lastPlayIdx = -1;
-      for (let i = playHistory.length - 1; i >= 0; i--) {
-        if (playHistory[i].type === "PLAY") {
-          lastPlayIdx = i;
-          break;
-        }
-      }
-
-      if (lastPlayIdx === -1) {
-        alert("No locked plays to undo.");
-        return;
-      }
-
-      const playToUndo = playHistory.splice(lastPlayIdx, 1)[0];
-
-      playToUndo.players.forEach(name => {
-        if (playerStats[name]) {
-          playerStats[name].total = Math.max(0, playerStats[name].total - 1);
-          if (playerStats[name].total < 10) {
-            playerStats[name].qtrMet = null;
-          }
-        }
-      });
-
-      playNumber = playToUndo.play;
-      currentQtr = playToUndo.quarter;
-      activePlayers = new Set(playToUndo.players);
-
-      playHistory.push({
-        type: "UNDO",
-        user: currentUser,
-        game: currentGame,
-        undonePlay: playToUndo.play,
-        quarter: currentQtr,
-        note: `Undone play #${playToUndo.play}`
-      });
-
-      document.querySelectorAll(".qtr-btn").forEach((btn, idx) => {
-        btn.classList.toggle("active", idx + 1 === currentQtr);
-      });
-
-      saveToLocalStorage();
-      render();
-    }
-
-    async function syncToGoogleSheet() {
-      if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-        alert("Paste your Google Apps Script Web App URL into SCRIPT_URL.");
-        return;
-      }
-
-      const statusEl = document.getElementById("actionStatus");
-      const spinnerEl = document.getElementById("statusSpinner");
-      const textEl = document.getElementById("statusText");
-
-      statusEl.className = "action-status syncing";
-      spinnerEl.style.display = "block";
-      textEl.innerText = "Syncing...";
-
-      try {
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user: currentUser,
-            game: currentGame,
-            playerStats: playerStats,
-            playHistory: playHistory
-          })
-        });
-
-        statusEl.className = "action-status synced";
-        spinnerEl.style.display = "none";
-        textEl.innerText = "✓ Synced";
-
-        setTimeout(() => {
-          statusEl.className = "action-status";
-        }, 3000);
-
-      } catch (err) {
-        alert("Error syncing: " + err.message);
-        statusEl.className = "action-status";
-      }
-    }
-
-    loadFromLocalStorage();
-    render();
-  </script>
 </body>
 </html>
